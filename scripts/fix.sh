@@ -1,0 +1,211 @@
+#!/bin/bash
+# Skills Janitor - Auto-Fix Common Issues
+# Fixes frontmatter problems, missing fields, and naming mismatches
+# Safe by default: --dry-run mode unless --apply is passed
+
+set -euo pipefail
+
+command -v python3 &>/dev/null || { echo "ERROR: python3 required" >&2; exit 1; }
+
+USER_SKILLS="$HOME/.claude/skills"
+PROJECT_SKILLS="./.claude/skills"
+DATA_DIR="$HOME/.claude/skills/skills-janitor/data"
+CHANGELOG="$DATA_DIR/changelog.log"
+
+DRY_RUN=true
+APPLY=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --apply) DRY_RUN=false; APPLY=true ;;
+        --dry-run) DRY_RUN=true ;;
+    esac
+done
+
+mkdir -p "$DATA_DIR"
+
+FIXES=0
+SKIPPED=0
+
+log_change() {
+    local skill="$1"
+    local action="$2"
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo "  [DRY RUN] $skill: $action"
+    else
+        echo "  [FIXED]   $skill: $action"
+        echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $skill: $action" >> "$CHANGELOG"
+    fi
+    ((FIXES++)) || true
+}
+
+fix_skill() {
+    local path="$1"
+    local scope="$2"
+    local name
+    name=$(basename "$path")
+
+    # Skip self
+    [[ "$name" == "skills-janitor" ]] && return
+
+    # Skip broken symlinks
+    if [[ -L "$path" && ! -e "$path" ]]; then
+        echo "  [SKIP]    $name: Broken symlink - remove manually"
+        ((SKIPPED++)) || true
+        return
+    fi
+
+    # Find skill file
+    local skill_file=""
+    [[ -f "$path/SKILL.md" ]] && skill_file="$path/SKILL.md"
+    [[ -f "$path/Skill.md" ]] && skill_file="$path/Skill.md"
+
+    if [[ -z "$skill_file" ]]; then
+        echo "  [SKIP]    $name: No SKILL.md found - create manually"
+        ((SKIPPED++)) || true
+        return
+    fi
+
+    # Skip plugin/marketplace skills
+    if [[ "$path" == *"/plugins/"* || "$path" == *"/sources/"* ]]; then
+        echo "  [SKIP]    $name: Plugin/marketplace skill - don't modify"
+        ((SKIPPED++)) || true
+        return
+    fi
+
+    local content
+    content=$(cat "$skill_file")
+    local modified=false
+    local new_content="$content"
+
+    # Fix 1: Add missing opening frontmatter delimiter
+    local first_line
+    first_line=$(head -1 "$skill_file")
+    if [[ "$first_line" != "---" ]]; then
+        # Check if it looks like frontmatter without delimiters (has name: or description:)
+        if head -5 "$skill_file" | grep -qE '^(name|description|version):'; then
+            new_content="---
+$new_content"
+            # Find where frontmatter-like content ends and add closing ---
+            local fm_end
+            fm_end=$(echo "$new_content" | awk 'NR==1{next} NR>1 && !/^[a-z_]+:/ && !/^---$/ && !/^[[:space:]]*$/{print NR-1; exit}')
+            if [[ -n "$fm_end" && "$fm_end" -gt 1 ]]; then
+                new_content=$(echo "$new_content" | sed "${fm_end}a\\
+---")
+            fi
+            modified=true
+            log_change "$name" "Added missing frontmatter delimiters (---)"
+        fi
+    fi
+
+    # Fix 2: Add missing closing frontmatter delimiter
+    if head -1 "$skill_file" | grep -q '^---'; then
+        local has_close
+        has_close=$(awk 'NR>1 && /^---$/{print "yes"; exit}' "$skill_file")
+        if [[ -z "$has_close" ]]; then
+            # Find end of frontmatter-like content
+            local insert_after
+            insert_after=$(awk 'NR==1{next} /^[a-z_]+:/{last=NR} END{print last}' "$skill_file")
+            if [[ -n "$insert_after" ]]; then
+                new_content=$(echo "$new_content" | sed "${insert_after}a\\
+---")
+                modified=true
+                log_change "$name" "Added missing closing --- delimiter"
+            fi
+        fi
+    fi
+
+    # Fix 3: Add template description if empty
+    # Re-parse after potential delimiter fixes
+    if echo "$new_content" | head -1 | grep -q '^---'; then
+        local frontmatter
+        frontmatter=$(echo "$new_content" | awk 'NR==1 && /^---$/{next} /^---$/{exit} {print}')
+
+        local has_desc
+        if echo "$frontmatter" | grep -q '^description:' 2>/dev/null; then has_desc=1; else has_desc=0; fi
+
+        if [[ "$has_desc" -eq 0 ]]; then
+            # Add description after name field or as first frontmatter field
+            local has_name
+            if echo "$frontmatter" | grep -q '^name:' 2>/dev/null; then has_name=1; else has_name=0; fi
+            if [[ "$has_name" -gt 0 ]]; then
+                new_content=$(echo "$new_content" | sed '/^name:/a\
+description: "Use when the user wants to use '"$name"'. Add specific trigger phrases here."')
+            else
+                new_content=$(echo "$new_content" | sed '1a\
+description: "Use when the user wants to use '"$name"'. Add specific trigger phrases here."')
+            fi
+            modified=true
+            log_change "$name" "Added template description field"
+        else
+            # Check if description is empty
+            local desc_value
+            desc_value=$(echo "$frontmatter" | grep '^description:' | sed 's/^description:[[:space:]]*//' | tr -d '"' | tr -d "'" | xargs 2>/dev/null || echo "")
+            if [[ -z "$desc_value" ]]; then
+                new_content=$(echo "$new_content" | sed 's/^description:[[:space:]]*/description: "Use when the user wants to use '"$name"'. Add specific trigger phrases here."/')
+                modified=true
+                log_change "$name" "Filled empty description with template"
+            fi
+        fi
+
+        # Fix 4: Add missing version field
+        local has_version
+        if echo "$frontmatter" | grep -q '^version:' 2>/dev/null; then has_version=1; else has_version=0; fi
+        if [[ "$has_version" -eq 0 ]]; then
+            # Add version after description or name
+            if echo "$new_content" | grep -q '^description:'; then
+                new_content=$(echo "$new_content" | sed '/^description:/a\
+version: "1.0.0"')
+            elif echo "$new_content" | grep -q '^name:'; then
+                new_content=$(echo "$new_content" | sed '/^name:/a\
+version: "1.0.0"')
+            fi
+            modified=true
+            log_change "$name" "Added missing version field (1.0.0)"
+        fi
+    fi
+
+    # Apply changes
+    if [[ "$modified" == "true" ]]; then
+        if [[ "$DRY_RUN" == "false" ]]; then
+            echo "$new_content" > "$skill_file"
+        fi
+    fi
+}
+
+echo "=== Skills Janitor - Auto-Fix ==="
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo "Mode: DRY RUN (use --apply to make changes)"
+else
+    echo "Mode: APPLY (changes will be written)"
+fi
+echo ""
+
+echo "--- User Skills ($USER_SKILLS) ---"
+if [[ -d "$USER_SKILLS" ]]; then
+    for skill_dir in "$USER_SKILLS"/*/; do
+        [[ -d "$skill_dir" ]] || continue
+        fix_skill "${skill_dir%/}" "user"
+    done
+fi
+
+# Only scan project skills if they're different from user skills
+USER_REAL=$(cd "$USER_SKILLS" 2>/dev/null && pwd -P)
+PROJECT_REAL=$(cd "$PROJECT_SKILLS" 2>/dev/null && pwd -P)
+if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
+    echo ""
+    echo "--- Project Skills ($PROJECT_SKILLS) ---"
+    for skill_dir in "$PROJECT_SKILLS"/*/; do
+        [[ -d "$skill_dir" ]] || continue
+        fix_skill "${skill_dir%/}" "project"
+    done
+fi
+
+echo ""
+echo "=== Summary ==="
+echo "  Fixable issues: $FIXES"
+echo "  Skipped:        $SKIPPED"
+if [[ "$DRY_RUN" == "true" && "$FIXES" -gt 0 ]]; then
+    echo ""
+    echo "  Run with --apply to make these changes."
+fi
