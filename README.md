@@ -2,6 +2,8 @@
 
 > Audit, track usage, and compare your Claude Code skills - 9 focused skills, zero dependencies.
 
+![Skills Janitor](demo.gif)
+
 A plugin for [Claude Code](https://claude.ai/claude-code) that keeps your skills ecosystem clean, organized, and healthy. Each action is its own skill with dedicated autocomplete.
 
 ## Skills
@@ -19,8 +21,6 @@ A plugin for [Claude Code](https://claude.ai/claude-code) that keeps your skills
 | `/janitor-compare` | Compare your skill with similar ones on GitHub |
 
 ## Install
-
-![Install demo](install.gif)
 
 **Plugin install (recommended):**
 ```
@@ -112,7 +112,7 @@ skills-janitor/
 │   ├── janitor-search/SKILL.md
 │   └── janitor-compare/SKILL.md
 ├── scripts/                  # Shared bash+python scripts
-├── install.gif
+├── demo.gif
 ├── LICENSE                   # MIT
 └── README.md
 ```
