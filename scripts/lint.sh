@@ -126,8 +126,8 @@ if [[ -d "$USER_SKILLS" ]]; then
 fi
 
 # Only scan project skills if they're different from user skills
-USER_REAL=$(cd "$USER_SKILLS" 2>/dev/null && pwd -P)
-PROJECT_REAL=$(cd "$PROJECT_SKILLS" 2>/dev/null && pwd -P)
+USER_REAL=$(cd "$USER_SKILLS" 2>/dev/null && pwd -P || echo "")
+PROJECT_REAL=$(cd "$PROJECT_SKILLS" 2>/dev/null && pwd -P || echo "")
 if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
     echo ""
     echo "--- Project Skills ($PROJECT_SKILLS) ---"

@@ -43,8 +43,8 @@ extract_skills() {
 extract_skills "$USER_SKILLS" "user"
 
 # Only scan project skills if they're different from user skills
-USER_REAL=$(cd "$USER_SKILLS" 2>/dev/null && pwd -P)
-PROJECT_REAL=$(cd "$PROJECT_SKILLS" 2>/dev/null && pwd -P)
+USER_REAL=$(cd "$USER_SKILLS" 2>/dev/null && pwd -P || echo "")
+PROJECT_REAL=$(cd "$PROJECT_SKILLS" 2>/dev/null && pwd -P || echo "")
 if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
     extract_skills "$PROJECT_SKILLS" "project"
 fi
