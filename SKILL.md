@@ -1,5 +1,5 @@
 ---
-name: Skills Janitor
+name: skills-janitor
 description: "Use when the user wants to audit, clean up, deduplicate, lint, or manage their Claude Code skills. Also use when the user mentions 'skill audit,' 'duplicate skills,' 'clean up skills,' 'skill health,' 'skill report,' 'unused skills,' 'broken skills,' 'skill inventory,' 'skill maintenance,' 'how many skills,' 'list my skills,' 'organize skills,' 'skill conflicts,' 'too many skills,' 'skill health check,' 'verify my skills,' 'check my skills,' 'review Claude Code setup,' 'spring cleaning skills,' 'skill hygiene,' 'skill usage,' 'how often,' 'find skills,' 'search skills,' 'skill alternatives,' 'compare skills,' 'skill marketplace,' 'better skill,' or 'skill market.' Provides comprehensive skill hygiene, usage tracking, discovery, and market comparison."
 version: "1.2.0"
 ---
