@@ -47,6 +47,6 @@ Present findings as a summary table:
 ## Related Skills
 
 - For duplicate detection: `/janitor-dupes`
-- For best practices check: `/janitor-lint`
+- For error check: `/janitor-check`
 - For auto-fixing issues: `/janitor-fix`
 - For a full health report: `/janitor-report`

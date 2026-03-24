@@ -12,7 +12,7 @@ A plugin for [Claude Code](https://claude.ai/claude-code) that keeps your skills
 |---------|-------------|
 | `/janitor-audit` | Show all your installed skills |
 | `/janitor-dupes` | Find duplicate skills that do the same thing |
-| `/janitor-lint` | Check skills for errors and missing info |
+| `/janitor-check` | Check skills for errors and missing info |
 | `/janitor-fix` | Automatically fix skill problems (safe preview first) |
 | `/janitor-prune` | Find and remove broken skills |
 | `/janitor-report` | Full health check of all your skills in one report |
@@ -44,7 +44,7 @@ Each skill has its own slash command with autocomplete:
 /janitor-usage          → which skills you actually invoke
 /janitor-search         → find skills on GitHub
 /janitor-compare        → market analysis vs alternatives
-/janitor-lint           → best practices check
+/janitor-check           → check for errors
 /janitor-fix            → auto-fix (dry-run by default)
 ```
 
@@ -106,7 +106,7 @@ skills-janitor/
 ├── skills/
 │   ├── janitor-audit/SKILL.md
 │   ├── janitor-dupes/SKILL.md
-│   ├── janitor-lint/SKILL.md
+│   ├── janitor-check/SKILL.md
 │   ├── janitor-fix/SKILL.md
 │   ├── janitor-prune/SKILL.md
 │   ├── janitor-report/SKILL.md

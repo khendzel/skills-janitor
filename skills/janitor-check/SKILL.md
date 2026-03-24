@@ -1,11 +1,11 @@
 ---
-name: janitor-lint
+name: janitor-check
 description: "Check skills for errors and missing info"
 metadata:
   version: 1.2.0
 ---
 
-# Skill Linter
+# Skill Check
 
 Check all skills against best practices and quality standards.
 

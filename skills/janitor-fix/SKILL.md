@@ -39,6 +39,6 @@ bash ~/.claude/skills/skills-janitor/scripts/fix.sh --apply   # apply changes
 
 ## Related Skills
 
-- For finding issues: `/janitor-lint`
+- For finding issues: `/janitor-check`
 - For duplicate detection: `/janitor-dupes`
 - For broken links/orphans: `/janitor-prune`

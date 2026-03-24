@@ -12,13 +12,13 @@
   "plugins": [
     {
       "name": "skills-janitor",
-      "description": "9 skill hygiene tools: audit, deduplicate, lint, fix, prune, report, usage tracking, GitHub search, and market comparison.",
+      "description": "9 skill hygiene tools: audit, deduplicate, check, fix, prune, report, usage tracking, GitHub search, and market comparison.",
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/janitor-audit",
         "./skills/janitor-dupes",
-        "./skills/janitor-lint",
+        "./skills/janitor-check",
         "./skills/janitor-fix",
         "./skills/janitor-prune",
         "./skills/janitor-report",

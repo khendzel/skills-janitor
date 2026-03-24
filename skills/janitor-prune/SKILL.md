@@ -41,4 +41,4 @@ Look for entries where `is_symlink: true` and `symlink_target` starts with "BROK
 
 - For full inventory: `/janitor-audit`
 - For auto-fixing: `/janitor-fix`
-- For lint checks: `/janitor-lint`
+- For error checks: `/janitor-check`
