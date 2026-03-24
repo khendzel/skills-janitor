@@ -24,6 +24,9 @@ scan_skill() {
     local skill_name
     skill_name=$(basename "$path")
 
+    # Skip self (plugin data dir, not a real skill)
+    [[ "$skill_name" == "skills-janitor" ]] && return
+
     local skill_file=""
     if [[ -f "$path/SKILL.md" ]]; then
         skill_file="$path/SKILL.md"

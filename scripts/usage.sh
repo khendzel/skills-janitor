@@ -51,6 +51,9 @@ collect_skills() {
         local name
         name=$(basename "$skill_dir")
 
+        # Skip self
+        [[ "$name" == "skills-janitor" ]] && continue
+
         local skill_file=""
         [[ -f "$skill_dir/SKILL.md" ]] && skill_file="$skill_dir/SKILL.md"
         [[ -f "$skill_dir/Skill.md" ]] && skill_file="$skill_dir/Skill.md"
