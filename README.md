@@ -2,6 +2,8 @@
 
 > Audit, track usage, and compare your Claude Code skills - in one command.
 
+![Skills Janitor demo](demo.gif)
+
 A maintenance skill for [Claude Code](https://claude.ai/claude-code) that keeps your skills ecosystem clean, organized, and healthy. Think of it as a package manager meets analytics for your Claude Code skills.
 
 ## Why
