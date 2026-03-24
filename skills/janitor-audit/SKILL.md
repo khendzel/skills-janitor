@@ -2,7 +2,7 @@
 name: janitor-audit
 description: "Show all your installed skills"
 metadata:
-  version: 1.3.0
+  version: 1.0.0
 ---
 
 # Skill Audit

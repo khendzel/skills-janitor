@@ -2,7 +2,7 @@
 name: janitor-report
 description: "Full health check of all your skills in one report"
 metadata:
-  version: 1.3.0
+  version: 1.0.0
 ---
 
 # Health Report

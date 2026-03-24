@@ -2,7 +2,7 @@
 name: janitor-usage
 description: "Show which skills you use and which you never use"
 metadata:
-  version: 1.3.0
+  version: 1.0.0
 ---
 
 # Usage Tracking

@@ -2,7 +2,7 @@
 name: janitor-fix
 description: "Automatically fix skill problems (safe preview first)"
 metadata:
-  version: 1.3.0
+  version: 1.0.0
 ---
 
 # Auto-Fix
