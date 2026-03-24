@@ -17,10 +17,10 @@
       "strict": false,
       "skills": [
         "./skills/janitor-audit",
-        "./skills/janitor-dupes",
+        "./skills/janitor-duplicates",
         "./skills/janitor-check",
         "./skills/janitor-fix",
-        "./skills/janitor-prune",
+        "./skills/janitor-cleanup",
         "./skills/janitor-report",
         "./skills/janitor-usage",
         "./skills/janitor-search",

@@ -55,4 +55,4 @@ Results are saved to `data/usage-history.json`, keeping the last 12 weeks for tr
 
 - For finding better alternatives: `/janitor-search`
 - For comparing against the market: `/janitor-compare`
-- For removing unused skills: `/janitor-prune`
+- For removing unused skills: `/janitor-cleanup`

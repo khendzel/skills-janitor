@@ -45,5 +45,5 @@ For each issue found, suggest a specific fix with the relevant janitor- command.
 
 - For inventory only: `/janitor-audit`
 - For error check only: `/janitor-check`
-- For duplicates only: `/janitor-dupes`
+- For duplicates only: `/janitor-duplicates`
 - For usage analytics: `/janitor-usage`

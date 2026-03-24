@@ -1,5 +1,5 @@
 ---
-name: janitor-dupes
+name: janitor-duplicates
 description: "Find duplicate skills that do the same thing"
 metadata:
   version: 1.2.0

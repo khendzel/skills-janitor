@@ -51,5 +51,5 @@ bash ~/.claude/skills/skills-janitor/scripts/lint.sh
 ## Related Skills
 
 - For auto-fixing issues found: `/janitor-fix`
-- For duplicate detection: `/janitor-dupes`
+- For duplicate detection: `/janitor-duplicates`
 - For full health report: `/janitor-report`

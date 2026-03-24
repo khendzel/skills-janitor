@@ -1,5 +1,5 @@
 ---
-name: janitor-prune
+name: janitor-cleanup
 description: "Find and remove broken skills"
 metadata:
   version: 1.2.0

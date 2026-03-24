@@ -11,10 +11,10 @@ A plugin for [Claude Code](https://claude.ai/claude-code) that keeps your skills
 | Command | What it does |
 |---------|-------------|
 | `/janitor-audit` | Show all your installed skills |
-| `/janitor-dupes` | Find duplicate skills that do the same thing |
+| `/janitor-duplicates` | Find duplicate skills that do the same thing |
 | `/janitor-check` | Check skills for errors and missing info |
 | `/janitor-fix` | Automatically fix skill problems (safe preview first) |
-| `/janitor-prune` | Find and remove broken skills |
+| `/janitor-cleanup` | Find and remove broken skills |
 | `/janitor-report` | Full health check of all your skills in one report |
 | `/janitor-usage` | Show which skills you use and which you never use |
 | `/janitor-search` | Search GitHub for new skills to install |
@@ -105,10 +105,10 @@ skills-janitor/
 │   └── marketplace.json      # Plugin manifest (9 skills)
 ├── skills/
 │   ├── janitor-audit/SKILL.md
-│   ├── janitor-dupes/SKILL.md
+│   ├── janitor-duplicates/SKILL.md
 │   ├── janitor-check/SKILL.md
 │   ├── janitor-fix/SKILL.md
-│   ├── janitor-prune/SKILL.md
+│   ├── janitor-cleanup/SKILL.md
 │   ├── janitor-report/SKILL.md
 │   ├── janitor-usage/SKILL.md
 │   ├── janitor-search/SKILL.md
