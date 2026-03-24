@@ -1,60 +1,117 @@
 # Skills Janitor
 
-A maintenance skill for Claude Code that keeps your skills ecosystem clean, organized, and healthy.
+> Audit, track usage, and compare your Claude Code skills - in one command.
+
+A maintenance skill for [Claude Code](https://claude.ai/claude-code) that keeps your skills ecosystem clean, organized, and healthy. Think of it as a package manager meets analytics for your Claude Code skills.
+
+## Why
+
+If you use Claude Code daily, you probably have 20+ skills scattered across `~/.claude/skills/`, project `.claude/skills/`, and plugin scopes. Over time they accumulate - duplicates, half-finished ones, skills you installed and never used. You have no idea if better alternatives exist.
+
+Skills Janitor fixes that.
 
 ## What it does
 
-| Action | What it checks |
-|--------|---------------|
-| **Audit** | Full inventory of all skills across user/project scopes |
-| **Deduplicate** | Finds skills with overlapping trigger keywords and descriptions |
-| **Lint** | Checks skills against best practices (frontmatter, descriptions, gotchas) |
-| **Prune** | Detects broken symlinks, empty directories, orphaned skills |
-| **Fix** | Auto-fixes common issues (with confirmation) |
-| **Report** | Generates a full health report with severity levels |
-| **Usage** | Tracks which skills you actually use vs. dead weight |
-| **Search** | Finds Claude Code skills on GitHub by keyword |
-| **Compare** | Market analysis - compares a skill against alternatives |
+| Action | Command | Description |
+|--------|---------|-------------|
+| **Audit** | `/skills-janitor audit` | Full inventory across all scopes |
+| **Deduplicate** | `/skills-janitor dupes` | Finds overlapping skills (Jaccard similarity) |
+| **Lint** | `/skills-janitor lint` | Checks against best practices |
+| **Fix** | `/skills-janitor fix` | Auto-fixes common issues (dry-run by default) |
+| **Prune** | `/skills-janitor prune` | Finds broken symlinks, orphaned skills |
+| **Report** | `/skills-janitor report` | Full health report with severity levels |
+| **Usage** | `/skills-janitor usage` | Tracks which skills you actually use |
+| **Search** | `/skills-janitor search <keyword>` | Finds skills on GitHub |
+| **Compare** | `/skills-janitor compare <skill>` | Market analysis vs alternatives |
 
 ## Install
 
-Copy the `skills-janitor` folder to your Claude Code skills directory:
-
 ```bash
-cp -r skills-janitor ~/.claude/skills/
+git clone https://github.com/khendzel/skills-janitor ~/.claude/skills/skills-janitor
 ```
 
-Or clone the repo and symlink:
+Then use `/skills-janitor` in Claude Code. That's it.
 
-```bash
-git clone https://github.com/YOUR_USERNAME/skills-janitor.git
-ln -s $(pwd)/skills-janitor ~/.claude/skills/skills-janitor
-```
-
-## Usage
+## Usage examples
 
 Just tell Claude what you need:
 
-- "audit my skills"
-- "find duplicate skills"
-- "lint my skills"
-- "clean up broken skills"
-- "give me a skills health report"
+```
+"audit my skills"
+"find duplicate skills"
+"which skills do I actually use?"
+"search for n8n skills on GitHub"
+"compare my-skill against alternatives"
+"give me a skills health report"
+```
 
-Or use the slash command style:
+Or use slash commands directly:
 
-- `/skills-janitor audit`
-- `/skills-janitor dupes`
-- `/skills-janitor lint`
-- `/skills-janitor prune`
-- `/skills-janitor report`
-- `/skills-janitor usage`
-- `/skills-janitor search marketing`
-- `/skills-janitor compare my-skill`
+```
+/skills-janitor audit
+/skills-janitor usage --weeks 8
+/skills-janitor search marketing
+/skills-janitor compare skills-janitor
+```
 
-## What it checks
+## Usage tracking
 
-### Lint rules
+Parses your Claude Code conversation history to show which skills you invoke and which are dead weight:
+
+```
+=== Skills Janitor - Usage Report ===
+Period: 2026-02-24 to 2026-03-23 (4 weeks)
+
+--- Most Used ---
+  Skill                    Explicit  Estimated  Total
+  n8n-workflows                   2          0      2
+  23studio-social-post            1          0      1
+
+--- Never Used (32 skills) ---
+  marketing-ab-test        (user)
+  marketing-analytics      (user)
+  ... and 30 more
+
+=== Summary ===
+  Active skills: 4 / 36 (11%)
+  Unused skills: 32 (89%)
+```
+
+## Skill discovery
+
+Search GitHub for Claude Code skills by keyword:
+
+```
+=== Skills Janitor - Skill Discovery ===
+Search: "marketing"
+
+  #  Repository                    Stars  Updated     Status
+  1  coreyhaines31/marketingskills  1,234  2026-03-15  INSTALLED
+  2  acme/marketing-automation        456  2026-03-10  AVAILABLE
+  3  user/claude-marketing-seo         89  2026-02-28  AVAILABLE
+```
+
+Set `GITHUB_TOKEN` env var for better results and higher rate limits.
+
+## Market comparison
+
+Compare any skill against alternatives with composite scoring:
+
+```
+=== Skills Janitor - Market Analysis ===
+Analyzing: skills-janitor
+
+--- Alternatives Found ---
+  #  Repository                Score  Stars  Overlap  Updated
+  1  obra/superpowers           72.3  106k     45%    2026-03-22
+  2  user/skill-manager         58.1  2.1k     62%    2026-03-18
+
+--- Related Marketplace Plugins (install counts) ---
+   169,670  code-review
+    77,603  skill-creator
+```
+
+## Lint rules
 
 - Missing or empty `name` / `description` fields
 - Description too short (< 30 chars) or too long (> 200 chars)
@@ -67,15 +124,20 @@ Or use the slash command style:
 - Broken symlinks
 - Empty skill directories
 
-### Duplicate detection
-
-Uses Jaccard similarity on extracted keywords from skill descriptions. Flags pairs with > 30% keyword overlap, which may indicate redundant or confusingly-similar skills.
-
-### What it won't do
+## What it won't do
 
 - Never deletes anything without explicit confirmation
 - Never modifies plugin/marketplace skills (they'd get overwritten on update)
-- Respects that some overlap is intentional (e.g., copywriting vs copy-editing)
+- Respects that some overlap is intentional
+- Dry-run by default for all destructive operations
+
+## Requirements
+
+- Bash
+- Python 3
+- `curl` (for GitHub search/compare features)
+
+No pip installs, no node modules - just what you already have.
 
 ## Structure
 
@@ -83,17 +145,19 @@ Uses Jaccard similarity on extracted keywords from skill descriptions. Flags pai
 skills-janitor/
 ├── SKILL.md              # Main skill definition
 ├── README.md             # This file
+├── LICENSE               # MIT
 ├── scripts/
-│   ├── scan.sh           # Full inventory scanner (outputs JSON)
+│   ├── scan.sh           # Full inventory scanner (JSON output)
 │   ├── detect_dupes.sh   # Keyword overlap analysis
 │   ├── lint.sh           # Best practices checker
+│   ├── fix.sh            # Auto-fix engine
 │   ├── usage.sh          # Usage tracking (parses history)
 │   ├── search.sh         # GitHub skill discovery
 │   └── compare.sh        # Market comparison & scoring
-└── data/                 # Created at runtime
-    ├── last-audit.json   # Most recent scan
-    ├── changelog.log     # All janitor actions
-    └── baseline.json     # First-run snapshot
+└── data/                 # Created at runtime (gitignored)
+    ├── usage-history.json
+    ├── search-cache.json
+    └── ...
 ```
 
 ## Contributing
