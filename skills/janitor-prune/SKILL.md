@@ -1,6 +1,6 @@
 ---
 name: janitor-prune
-description: "Find broken symlinks, empty directories, and orphaned skills. Trigger: broken skills, dead skills, prune skills, clean up broken. See also: janitor-audit, janitor-fix."
+description: "Find broken or dead skills that no longer work"
 metadata:
   version: 1.2.0
 ---

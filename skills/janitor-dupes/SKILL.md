@@ -1,6 +1,6 @@
 ---
 name: janitor-dupes
-description: "Find duplicate and overlapping skills using Jaccard keyword similarity. Trigger: duplicate skills, skill conflicts, overlapping skills, redundant skills. See also: janitor-audit, janitor-fix."
+description: "Find skills that do the same thing (duplicates)"
 metadata:
   version: 1.2.0
 ---

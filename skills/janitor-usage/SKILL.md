@@ -1,6 +1,6 @@
 ---
 name: janitor-usage
-description: "Track which skills you actually use by parsing conversation history. Trigger: skill usage, unused skills, how often, dead weight, skill analytics. See also: janitor-search, janitor-compare."
+description: "Show which skills you actually use and which are dead weight"
 metadata:
   version: 1.2.0
 ---

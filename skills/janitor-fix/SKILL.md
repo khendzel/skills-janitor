@@ -1,6 +1,6 @@
 ---
 name: janitor-fix
-description: "Auto-fix common skill issues (dry-run by default). Trigger: fix skills, repair skills, clean up skills, fix frontmatter. See also: janitor-lint, janitor-dupes."
+description: "Auto-repair skill issues (preview mode by default)"
 metadata:
   version: 1.2.0
 ---

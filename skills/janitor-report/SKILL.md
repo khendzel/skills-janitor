@@ -1,6 +1,6 @@
 ---
 name: janitor-report
-description: "Full health report combining audit, lint, and duplicate data. Trigger: skill report, skill health, skills overview, spring cleaning. See also: janitor-audit, janitor-lint, janitor-dupes."
+description: "One-page health summary of all your skills"
 metadata:
   version: 1.2.0
 ---

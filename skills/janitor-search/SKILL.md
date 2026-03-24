@@ -1,6 +1,6 @@
 ---
 name: janitor-search
-description: "Search GitHub for Claude Code skills by keyword. Shows stars, forks, installed status. Trigger: find skills, search skills, discover skills, skill marketplace. See also: janitor-compare, janitor-usage."
+description: "Find new skills on GitHub by keyword"
 metadata:
   version: 1.2.0
 ---

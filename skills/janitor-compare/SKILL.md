@@ -1,6 +1,6 @@
 ---
 name: janitor-compare
-description: "Compare a skill against GitHub alternatives with scoring. Trigger: compare skills, skill alternatives, better skill, skill market, skill competition. See also: janitor-search, janitor-usage."
+description: "Compare your skill against alternatives on GitHub"
 metadata:
   version: 1.2.0
 ---

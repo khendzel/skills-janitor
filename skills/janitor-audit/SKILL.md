@@ -1,6 +1,6 @@
 ---
 name: janitor-audit
-description: "Full inventory of all skills across user, project, and plugin scopes. Trigger: skill audit, how many skills, list my skills, scan skills. See also: janitor-dupes, janitor-lint, janitor-usage."
+description: "List all your installed skills across every scope"
 metadata:
   version: 1.2.0
 ---

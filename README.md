@@ -8,19 +8,21 @@ A plugin for [Claude Code](https://claude.ai/claude-code) that keeps your skills
 
 ## Skills
 
-| Skill | Command | Description |
-|-------|---------|-------------|
-| **Audit** | `/janitor-audit` | Full inventory across all scopes |
-| **Deduplicate** | `/janitor-dupes` | Finds overlapping skills (Jaccard similarity) |
-| **Lint** | `/janitor-lint` | Checks against best practices |
-| **Fix** | `/janitor-fix` | Auto-fixes common issues (dry-run by default) |
-| **Prune** | `/janitor-prune` | Finds broken symlinks, orphaned skills |
-| **Report** | `/janitor-report` | Full health report with severity levels |
-| **Usage** | `/janitor-usage` | Tracks which skills you actually use |
-| **Search** | `/janitor-search` | Finds skills on GitHub |
-| **Compare** | `/janitor-compare` | Market analysis vs alternatives |
+| Command | What it does |
+|---------|-------------|
+| `/janitor-audit` | Lists all your installed skills across every scope |
+| `/janitor-dupes` | Finds skills that do the same thing (duplicates) |
+| `/janitor-lint` | Checks your skills for common problems (missing descriptions, bad structure) |
+| `/janitor-fix` | Automatically repairs issues found by lint and dupes (safe - preview mode by default) |
+| `/janitor-prune` | Finds broken or dead skills that no longer work |
+| `/janitor-report` | One-page health summary combining all checks above |
+| `/janitor-usage` | Shows which skills you actually use and which are just sitting there |
+| `/janitor-search` | Finds new skills on GitHub by keyword |
+| `/janitor-compare` | Compares your skill against alternatives on the market |
 
 ## Install
+
+![Install demo](install.gif)
 
 **Plugin install (recommended):**
 ```

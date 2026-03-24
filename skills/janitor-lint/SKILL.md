@@ -1,6 +1,6 @@
 ---
 name: janitor-lint
-description: "Check skills against best practices - frontmatter, descriptions, structure. Trigger: lint skills, skill health check, verify skills, skill quality. See also: janitor-fix, janitor-audit."
+description: "Check skills for common problems (missing info, bad structure)"
 metadata:
   version: 1.2.0
 ---
