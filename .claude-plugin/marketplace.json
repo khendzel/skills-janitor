@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Audit, track usage, and compare your Claude Code skills. 9 actions, zero dependencies.",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "repository": "https://github.com/khendzel/skills-janitor"
   },
   "plugins": [

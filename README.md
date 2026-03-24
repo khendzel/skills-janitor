@@ -42,7 +42,7 @@ Each skill has its own slash command with autocomplete:
 /janitor-usage          → which skills you actually invoke
 /janitor-search         → find skills on GitHub
 /janitor-compare        → market analysis vs alternatives
-/janitor-check           → check for errors
+/janitor-check          → check for errors
 /janitor-fix            → auto-fix (dry-run by default)
 ```
 
@@ -56,7 +56,7 @@ Or use natural language - skills trigger from keywords in their descriptions:
 
 ## Usage tracking
 
-Parses your conversation history to show which skills you invoke and which are dead weight:
+Parses your conversation history to show which skills you invoke and which you never use:
 
 ```
 === Skills Janitor - Usage Report ===
@@ -112,7 +112,7 @@ skills-janitor/
 │   ├── janitor-search/SKILL.md
 │   └── janitor-compare/SKILL.md
 ├── scripts/                  # Shared bash+python scripts
-├── demo.gif
+├── install.gif
 ├── LICENSE                   # MIT
 └── README.md
 ```

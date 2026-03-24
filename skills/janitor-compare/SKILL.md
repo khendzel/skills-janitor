@@ -2,7 +2,7 @@
 name: janitor-compare
 description: "Compare your skill with similar ones on GitHub"
 metadata:
-  version: 1.2.0
+  version: 1.3.0
 ---
 
 # Market Comparison
