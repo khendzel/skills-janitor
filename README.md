@@ -10,15 +10,15 @@ A plugin for [Claude Code](https://claude.ai/claude-code) that keeps your skills
 
 | Command | What it does |
 |---------|-------------|
-| `/janitor-audit` | Lists all your installed skills across every scope |
-| `/janitor-dupes` | Finds skills that do the same thing (duplicates) |
-| `/janitor-lint` | Checks your skills for common problems (missing descriptions, bad structure) |
-| `/janitor-fix` | Automatically repairs issues found by lint and dupes (safe - preview mode by default) |
-| `/janitor-prune` | Finds broken or dead skills that no longer work |
-| `/janitor-report` | One-page health summary combining all checks above |
-| `/janitor-usage` | Shows which skills you actually use and which are just sitting there |
-| `/janitor-search` | Finds new skills on GitHub by keyword |
-| `/janitor-compare` | Compares your skill against alternatives on the market |
+| `/janitor-audit` | Show all your installed skills |
+| `/janitor-dupes` | Find duplicate skills that do the same thing |
+| `/janitor-lint` | Check skills for errors and missing info |
+| `/janitor-fix` | Automatically fix skill problems (safe preview first) |
+| `/janitor-prune` | Find and remove broken skills |
+| `/janitor-report` | Full health check of all your skills in one report |
+| `/janitor-usage` | Show which skills you use and which you never use |
+| `/janitor-search` | Search GitHub for new skills to install |
+| `/janitor-compare` | Compare your skill with similar ones on GitHub |
 
 ## Install
 

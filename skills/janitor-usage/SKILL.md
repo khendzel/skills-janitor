@@ -1,6 +1,6 @@
 ---
 name: janitor-usage
-description: "Show which skills you actually use and which are dead weight"
+description: "Show which skills you use and which you never use"
 metadata:
   version: 1.2.0
 ---

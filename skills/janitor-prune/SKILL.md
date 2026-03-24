@@ -1,6 +1,6 @@
 ---
 name: janitor-prune
-description: "Find broken or dead skills that no longer work"
+description: "Find and remove broken skills"
 metadata:
   version: 1.2.0
 ---

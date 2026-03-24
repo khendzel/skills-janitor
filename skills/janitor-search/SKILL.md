@@ -1,6 +1,6 @@
 ---
 name: janitor-search
-description: "Find new skills on GitHub by keyword"
+description: "Search GitHub for new skills to install"
 metadata:
   version: 1.2.0
 ---

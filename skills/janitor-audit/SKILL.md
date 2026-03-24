@@ -1,6 +1,6 @@
 ---
 name: janitor-audit
-description: "List all your installed skills across every scope"
+description: "Show all your installed skills"
 metadata:
   version: 1.2.0
 ---

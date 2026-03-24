@@ -1,6 +1,6 @@
 ---
 name: janitor-fix
-description: "Auto-repair skill issues (preview mode by default)"
+description: "Automatically fix skill problems (safe preview first)"
 metadata:
   version: 1.2.0
 ---

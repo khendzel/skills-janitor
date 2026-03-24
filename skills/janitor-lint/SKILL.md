@@ -1,6 +1,6 @@
 ---
 name: janitor-lint
-description: "Check skills for common problems (missing info, bad structure)"
+description: "Check skills for errors and missing info"
 metadata:
   version: 1.2.0
 ---
