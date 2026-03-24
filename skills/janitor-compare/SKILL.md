@@ -1,6 +1,6 @@
 ---
 name: janitor-compare
-description: "When the user wants to compare a Claude Code skill against alternatives on the market. Also use when the user mentions 'compare skills,' 'skill alternatives,' 'better skill,' 'skill market,' 'is my skill the best,' or 'skill competition.' Scores alternatives by keyword overlap, popularity, recency, and activity. For finding skills, see janitor-search. For usage data, see janitor-usage."
+description: "Compare a skill against GitHub alternatives with scoring. Trigger: compare skills, skill alternatives, better skill, skill market, skill competition. See also: janitor-search, janitor-usage."
 metadata:
   version: 1.2.0
 ---

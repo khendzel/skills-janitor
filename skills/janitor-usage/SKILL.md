@@ -1,6 +1,6 @@
 ---
 name: janitor-usage
-description: "When the user wants to know which Claude Code skills they actually use. Also use when the user mentions 'skill usage,' 'unused skills,' 'how often,' 'dead weight skills,' 'which skills do I use,' 'never used,' or 'skill analytics.' Parses conversation history to track invocations. For finding skills on GitHub, see janitor-search. For market comparison, see janitor-compare."
+description: "Track which skills you actually use by parsing conversation history. Trigger: skill usage, unused skills, how often, dead weight, skill analytics. See also: janitor-search, janitor-compare."
 metadata:
   version: 1.2.0
 ---

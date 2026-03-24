@@ -1,6 +1,6 @@
 ---
 name: janitor-prune
-description: "When the user wants to find broken, orphaned, or dead Claude Code skills. Also use when the user mentions 'broken skills,' 'dead skills,' 'orphaned skills,' 'broken links,' 'clean up broken,' or 'prune skills.' Finds broken symlinks, empty directories, and orphaned user-scope duplicates. For full inventory, see janitor-audit. For fixing, see janitor-fix."
+description: "Find broken symlinks, empty directories, and orphaned skills. Trigger: broken skills, dead skills, prune skills, clean up broken. See also: janitor-audit, janitor-fix."
 metadata:
   version: 1.2.0
 ---

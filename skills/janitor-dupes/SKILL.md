@@ -1,6 +1,6 @@
 ---
 name: janitor-dupes
-description: "When the user wants to find duplicate or overlapping Claude Code skills. Also use when the user mentions 'duplicate skills,' 'skill conflicts,' 'overlapping skills,' 'redundant skills,' 'similar skills,' or 'skill collision.' Uses Jaccard similarity on trigger keywords. For full inventory, see janitor-audit. For fixing issues, see janitor-fix."
+description: "Find duplicate and overlapping skills using Jaccard keyword similarity. Trigger: duplicate skills, skill conflicts, overlapping skills, redundant skills. See also: janitor-audit, janitor-fix."
 metadata:
   version: 1.2.0
 ---

@@ -1,6 +1,6 @@
 ---
 name: janitor-lint
-description: "When the user wants to check their Claude Code skills against best practices. Also use when the user mentions 'lint skills,' 'skill health check,' 'verify my skills,' 'check my skills,' 'skill quality,' or 'skill best practices.' Validates frontmatter, descriptions, and structure. For auto-fixing, see janitor-fix. For full inventory, see janitor-audit."
+description: "Check skills against best practices - frontmatter, descriptions, structure. Trigger: lint skills, skill health check, verify skills, skill quality. See also: janitor-fix, janitor-audit."
 metadata:
   version: 1.2.0
 ---

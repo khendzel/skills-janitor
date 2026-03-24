@@ -1,6 +1,6 @@
 ---
 name: janitor-report
-description: "When the user wants a full health report on their Claude Code skills. Also use when the user mentions 'skill report,' 'skill health,' 'skills health check,' 'skills overview,' 'review Claude Code setup,' or 'spring cleaning skills.' Combines audit, lint, and duplicate data into one summary. For individual checks, see janitor-audit, janitor-lint, janitor-dupes."
+description: "Full health report combining audit, lint, and duplicate data. Trigger: skill report, skill health, skills overview, spring cleaning. See also: janitor-audit, janitor-lint, janitor-dupes."
 metadata:
   version: 1.2.0
 ---

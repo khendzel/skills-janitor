@@ -1,6 +1,6 @@
 ---
 name: janitor-audit
-description: "When the user wants a full inventory of their Claude Code skills across all scopes. Also use when the user mentions 'skill audit,' 'how many skills,' 'list my skills,' 'skill inventory,' 'what skills do I have,' or 'scan my skills.' Scans user, project, and plugin scopes. For duplicates, see janitor-dupes. For best practices check, see janitor-lint. For usage tracking, see janitor-usage."
+description: "Full inventory of all skills across user, project, and plugin scopes. Trigger: skill audit, how many skills, list my skills, scan skills. See also: janitor-dupes, janitor-lint, janitor-usage."
 metadata:
   version: 1.2.0
 ---

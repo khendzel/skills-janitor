@@ -1,6 +1,6 @@
 ---
 name: janitor-fix
-description: "When the user wants to auto-fix common Claude Code skill issues. Also use when the user mentions 'fix skills,' 'repair skills,' 'clean up skills,' 'fix frontmatter,' or 'auto-fix skills.' Runs in dry-run mode by default. For finding issues first, see janitor-lint. For duplicate resolution, see janitor-dupes."
+description: "Auto-fix common skill issues (dry-run by default). Trigger: fix skills, repair skills, clean up skills, fix frontmatter. See also: janitor-lint, janitor-dupes."
 metadata:
   version: 1.2.0
 ---
