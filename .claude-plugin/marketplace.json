@@ -16,15 +16,15 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/jan-audit",
-        "./skills/jan-dupes",
-        "./skills/jan-lint",
-        "./skills/jan-fix",
-        "./skills/jan-prune",
-        "./skills/jan-report",
-        "./skills/jan-usage",
-        "./skills/jan-search",
-        "./skills/jan-compare"
+        "./skills/janitor-audit",
+        "./skills/janitor-dupes",
+        "./skills/janitor-lint",
+        "./skills/janitor-fix",
+        "./skills/janitor-prune",
+        "./skills/janitor-report",
+        "./skills/janitor-usage",
+        "./skills/janitor-search",
+        "./skills/janitor-compare"
       ]
     }
   ]

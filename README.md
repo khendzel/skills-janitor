@@ -10,15 +10,15 @@ A plugin for [Claude Code](https://claude.ai/claude-code) that keeps your skills
 
 | Skill | Command | Description |
 |-------|---------|-------------|
-| **Audit** | `/jan-audit` | Full inventory across all scopes |
-| **Deduplicate** | `/jan-dupes` | Finds overlapping skills (Jaccard similarity) |
-| **Lint** | `/jan-lint` | Checks against best practices |
-| **Fix** | `/jan-fix` | Auto-fixes common issues (dry-run by default) |
-| **Prune** | `/jan-prune` | Finds broken symlinks, orphaned skills |
-| **Report** | `/jan-report` | Full health report with severity levels |
-| **Usage** | `/jan-usage` | Tracks which skills you actually use |
-| **Search** | `/jan-search` | Finds skills on GitHub |
-| **Compare** | `/jan-compare` | Market analysis vs alternatives |
+| **Audit** | `/janitor-audit` | Full inventory across all scopes |
+| **Deduplicate** | `/janitor-dupes` | Finds overlapping skills (Jaccard similarity) |
+| **Lint** | `/janitor-lint` | Checks against best practices |
+| **Fix** | `/janitor-fix` | Auto-fixes common issues (dry-run by default) |
+| **Prune** | `/janitor-prune` | Finds broken symlinks, orphaned skills |
+| **Report** | `/janitor-report` | Full health report with severity levels |
+| **Usage** | `/janitor-usage` | Tracks which skills you actually use |
+| **Search** | `/janitor-search` | Finds skills on GitHub |
+| **Compare** | `/janitor-compare` | Market analysis vs alternatives |
 
 ## Install
 
@@ -38,12 +38,12 @@ git clone https://github.com/khendzel/skills-janitor ~/.claude/skills/skills-jan
 Each skill has its own slash command with autocomplete:
 
 ```
-/jan-audit          → full skill inventory
-/jan-usage          → which skills you actually invoke
-/jan-search         → find skills on GitHub
-/jan-compare        → market analysis vs alternatives
-/jan-lint           → best practices check
-/jan-fix            → auto-fix (dry-run by default)
+/janitor-audit          → full skill inventory
+/janitor-usage          → which skills you actually invoke
+/janitor-search         → find skills on GitHub
+/janitor-compare        → market analysis vs alternatives
+/janitor-lint           → best practices check
+/janitor-fix            → auto-fix (dry-run by default)
 ```
 
 Or use natural language - skills trigger from keywords in their descriptions:
@@ -102,15 +102,15 @@ skills-janitor/
 ├── .claude-plugin/
 │   └── marketplace.json      # Plugin manifest (9 skills)
 ├── skills/
-│   ├── jan-audit/SKILL.md
-│   ├── jan-dupes/SKILL.md
-│   ├── jan-lint/SKILL.md
-│   ├── jan-fix/SKILL.md
-│   ├── jan-prune/SKILL.md
-│   ├── jan-report/SKILL.md
-│   ├── jan-usage/SKILL.md
-│   ├── jan-search/SKILL.md
-│   └── jan-compare/SKILL.md
+│   ├── janitor-audit/SKILL.md
+│   ├── janitor-dupes/SKILL.md
+│   ├── janitor-lint/SKILL.md
+│   ├── janitor-fix/SKILL.md
+│   ├── janitor-prune/SKILL.md
+│   ├── janitor-report/SKILL.md
+│   ├── janitor-usage/SKILL.md
+│   ├── janitor-search/SKILL.md
+│   └── janitor-compare/SKILL.md
 ├── scripts/                  # Shared bash+python scripts
 ├── demo.gif
 ├── LICENSE                   # MIT
@@ -119,7 +119,7 @@ skills-janitor/
 
 ## Contributing
 
-PRs welcome. Each skill is self-contained in `skills/jan-*/SKILL.md`.
+PRs welcome. Each skill is self-contained in `skills/janitor-*/SKILL.md`.
 
 ## License
 

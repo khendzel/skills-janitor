@@ -1,6 +1,6 @@
 ---
-name: jan-dupes
-description: "When the user wants to find duplicate or overlapping Claude Code skills. Also use when the user mentions 'duplicate skills,' 'skill conflicts,' 'overlapping skills,' 'redundant skills,' 'similar skills,' or 'skill collision.' Uses Jaccard similarity on trigger keywords. For full inventory, see jan-audit. For fixing issues, see jan-fix."
+name: janitor-dupes
+description: "When the user wants to find duplicate or overlapping Claude Code skills. Also use when the user mentions 'duplicate skills,' 'skill conflicts,' 'overlapping skills,' 'redundant skills,' 'similar skills,' or 'skill collision.' Uses Jaccard similarity on trigger keywords. For full inventory, see janitor-audit. For fixing issues, see janitor-fix."
 metadata:
   version: 1.2.0
 ---
@@ -43,6 +43,6 @@ bash ~/.claude/skills/skills-janitor/scripts/detect_dupes.sh
 
 ## Related Skills
 
-- For full skill inventory: `/jan-audit`
-- For auto-fixing issues: `/jan-fix`
-- For a health report: `/jan-report`
+- For full skill inventory: `/janitor-audit`
+- For auto-fixing issues: `/janitor-fix`
+- For a health report: `/janitor-report`

@@ -1,6 +1,6 @@
 ---
-name: jan-prune
-description: "When the user wants to find broken, orphaned, or dead Claude Code skills. Also use when the user mentions 'broken skills,' 'dead skills,' 'orphaned skills,' 'broken links,' 'clean up broken,' or 'prune skills.' Finds broken symlinks, empty directories, and orphaned user-scope duplicates. For full inventory, see jan-audit. For fixing, see jan-fix."
+name: janitor-prune
+description: "When the user wants to find broken, orphaned, or dead Claude Code skills. Also use when the user mentions 'broken skills,' 'dead skills,' 'orphaned skills,' 'broken links,' 'clean up broken,' or 'prune skills.' Finds broken symlinks, empty directories, and orphaned user-scope duplicates. For full inventory, see janitor-audit. For fixing, see janitor-fix."
 metadata:
   version: 1.2.0
 ---
@@ -39,6 +39,6 @@ Look for entries where `is_symlink: true` and `symlink_target` starts with "BROK
 
 ## Related Skills
 
-- For full inventory: `/jan-audit`
-- For auto-fixing: `/jan-fix`
-- For lint checks: `/jan-lint`
+- For full inventory: `/janitor-audit`
+- For auto-fixing: `/janitor-fix`
+- For lint checks: `/janitor-lint`

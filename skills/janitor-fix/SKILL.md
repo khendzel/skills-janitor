@@ -1,6 +1,6 @@
 ---
-name: jan-fix
-description: "When the user wants to auto-fix common Claude Code skill issues. Also use when the user mentions 'fix skills,' 'repair skills,' 'clean up skills,' 'fix frontmatter,' or 'auto-fix skills.' Runs in dry-run mode by default. For finding issues first, see jan-lint. For duplicate resolution, see jan-dupes."
+name: janitor-fix
+description: "When the user wants to auto-fix common Claude Code skill issues. Also use when the user mentions 'fix skills,' 'repair skills,' 'clean up skills,' 'fix frontmatter,' or 'auto-fix skills.' Runs in dry-run mode by default. For finding issues first, see janitor-lint. For duplicate resolution, see janitor-dupes."
 metadata:
   version: 1.2.0
 ---
@@ -39,6 +39,6 @@ bash ~/.claude/skills/skills-janitor/scripts/fix.sh --apply   # apply changes
 
 ## Related Skills
 
-- For finding issues: `/jan-lint`
-- For duplicate detection: `/jan-dupes`
-- For broken links/orphans: `/jan-prune`
+- For finding issues: `/janitor-lint`
+- For duplicate detection: `/janitor-dupes`
+- For broken links/orphans: `/janitor-prune`

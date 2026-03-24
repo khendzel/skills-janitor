@@ -1,6 +1,6 @@
 ---
-name: jan-report
-description: "When the user wants a full health report on their Claude Code skills. Also use when the user mentions 'skill report,' 'skill health,' 'skills health check,' 'skills overview,' 'review Claude Code setup,' or 'spring cleaning skills.' Combines audit, lint, and duplicate data into one summary. For individual checks, see jan-audit, jan-lint, jan-dupes."
+name: janitor-report
+description: "When the user wants a full health report on their Claude Code skills. Also use when the user mentions 'skill report,' 'skill health,' 'skills health check,' 'skills overview,' 'review Claude Code setup,' or 'spring cleaning skills.' Combines audit, lint, and duplicate data into one summary. For individual checks, see janitor-audit, janitor-lint, janitor-dupes."
 metadata:
   version: 1.2.0
 ---
@@ -39,11 +39,11 @@ Present a unified report with:
 - `INFO` - suggestions for improvement (nice to have)
 
 ### Recommended Actions
-For each issue found, suggest a specific fix with the relevant jan- command.
+For each issue found, suggest a specific fix with the relevant janitor- command.
 
 ## Related Skills
 
-- For inventory only: `/jan-audit`
-- For lint only: `/jan-lint`
-- For duplicates only: `/jan-dupes`
-- For usage analytics: `/jan-usage`
+- For inventory only: `/janitor-audit`
+- For lint only: `/janitor-lint`
+- For duplicates only: `/janitor-dupes`
+- For usage analytics: `/janitor-usage`

@@ -1,6 +1,6 @@
 ---
-name: jan-audit
-description: "When the user wants a full inventory of their Claude Code skills across all scopes. Also use when the user mentions 'skill audit,' 'how many skills,' 'list my skills,' 'skill inventory,' 'what skills do I have,' or 'scan my skills.' Scans user, project, and plugin scopes. For duplicates, see jan-dupes. For best practices check, see jan-lint. For usage tracking, see jan-usage."
+name: janitor-audit
+description: "When the user wants a full inventory of their Claude Code skills across all scopes. Also use when the user mentions 'skill audit,' 'how many skills,' 'list my skills,' 'skill inventory,' 'what skills do I have,' or 'scan my skills.' Scans user, project, and plugin scopes. For duplicates, see janitor-dupes. For best practices check, see janitor-lint. For usage tracking, see janitor-usage."
 metadata:
   version: 1.2.0
 ---
@@ -46,7 +46,7 @@ Present findings as a summary table:
 
 ## Related Skills
 
-- For duplicate detection: `/jan-dupes`
-- For best practices check: `/jan-lint`
-- For auto-fixing issues: `/jan-fix`
-- For a full health report: `/jan-report`
+- For duplicate detection: `/janitor-dupes`
+- For best practices check: `/janitor-lint`
+- For auto-fixing issues: `/janitor-fix`
+- For a full health report: `/janitor-report`

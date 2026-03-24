@@ -1,6 +1,6 @@
 ---
-name: jan-usage
-description: "When the user wants to know which Claude Code skills they actually use. Also use when the user mentions 'skill usage,' 'unused skills,' 'how often,' 'dead weight skills,' 'which skills do I use,' 'never used,' or 'skill analytics.' Parses conversation history to track invocations. For finding skills on GitHub, see jan-search. For market comparison, see jan-compare."
+name: janitor-usage
+description: "When the user wants to know which Claude Code skills they actually use. Also use when the user mentions 'skill usage,' 'unused skills,' 'how often,' 'dead weight skills,' 'which skills do I use,' 'never used,' or 'skill analytics.' Parses conversation history to track invocations. For finding skills on GitHub, see janitor-search. For market comparison, see janitor-compare."
 metadata:
   version: 1.2.0
 ---
@@ -21,7 +21,7 @@ bash ~/.claude/skills/skills-janitor/scripts/usage.sh [--weeks N] [--json]
 ## What It Detects
 
 ### Explicit Invocations
-Slash commands starting with `/skill-name` (e.g., `/n8n-workflows`, `/jan-audit`). Most reliable signal.
+Slash commands starting with `/skill-name` (e.g., `/n8n-workflows`, `/janitor-audit`). Most reliable signal.
 
 ### Estimated Invocations
 Natural language matching against skill description keywords. Higher threshold (50%) to avoid false positives. Labeled as "estimated" in output.
@@ -53,6 +53,6 @@ Results are saved to `data/usage-history.json`, keeping the last 12 weeks for tr
 
 ## Related Skills
 
-- For finding better alternatives: `/jan-search`
-- For comparing against the market: `/jan-compare`
-- For removing unused skills: `/jan-prune`
+- For finding better alternatives: `/janitor-search`
+- For comparing against the market: `/janitor-compare`
+- For removing unused skills: `/janitor-prune`

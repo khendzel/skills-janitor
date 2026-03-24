@@ -1,6 +1,6 @@
 ---
-name: jan-search
-description: "When the user wants to find Claude Code skills on GitHub. Also use when the user mentions 'find skills,' 'search skills,' 'skill marketplace,' 'discover skills,' 'what skills exist,' or 'GitHub skills.' Searches repos by keyword, shows stars/forks, marks installed vs available. For comparing against alternatives, see jan-compare. For tracking what you use, see jan-usage."
+name: janitor-search
+description: "When the user wants to find Claude Code skills on GitHub. Also use when the user mentions 'find skills,' 'search skills,' 'skill marketplace,' 'discover skills,' 'what skills exist,' or 'GitHub skills.' Searches repos by keyword, shows stars/forks, marks installed vs available. For comparing against alternatives, see janitor-compare. For tracking what you use, see janitor-usage."
 metadata:
   version: 1.2.0
 ---
@@ -48,6 +48,6 @@ Total: 3 results (1 installed, 2 available)
 
 ## Related Skills
 
-- For comparing your skills against alternatives: `/jan-compare`
-- For checking which skills you actually use: `/jan-usage`
-- For full inventory of installed skills: `/jan-audit`
+- For comparing your skills against alternatives: `/janitor-compare`
+- For checking which skills you actually use: `/janitor-usage`
+- For full inventory of installed skills: `/janitor-audit`

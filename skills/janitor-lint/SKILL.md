@@ -1,6 +1,6 @@
 ---
-name: jan-lint
-description: "When the user wants to check their Claude Code skills against best practices. Also use when the user mentions 'lint skills,' 'skill health check,' 'verify my skills,' 'check my skills,' 'skill quality,' or 'skill best practices.' Validates frontmatter, descriptions, and structure. For auto-fixing, see jan-fix. For full inventory, see jan-audit."
+name: janitor-lint
+description: "When the user wants to check their Claude Code skills against best practices. Also use when the user mentions 'lint skills,' 'skill health check,' 'verify my skills,' 'check my skills,' 'skill quality,' or 'skill best practices.' Validates frontmatter, descriptions, and structure. For auto-fixing, see janitor-fix. For full inventory, see janitor-audit."
 metadata:
   version: 1.2.0
 ---
@@ -50,6 +50,6 @@ bash ~/.claude/skills/skills-janitor/scripts/lint.sh
 
 ## Related Skills
 
-- For auto-fixing issues found: `/jan-fix`
-- For duplicate detection: `/jan-dupes`
-- For full health report: `/jan-report`
+- For auto-fixing issues found: `/janitor-fix`
+- For duplicate detection: `/janitor-dupes`
+- For full health report: `/janitor-report`

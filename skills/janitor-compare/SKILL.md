@@ -1,6 +1,6 @@
 ---
-name: jan-compare
-description: "When the user wants to compare a Claude Code skill against alternatives on the market. Also use when the user mentions 'compare skills,' 'skill alternatives,' 'better skill,' 'skill market,' 'is my skill the best,' or 'skill competition.' Scores alternatives by keyword overlap, popularity, recency, and activity. For finding skills, see jan-search. For usage data, see jan-usage."
+name: janitor-compare
+description: "When the user wants to compare a Claude Code skill against alternatives on the market. Also use when the user mentions 'compare skills,' 'skill alternatives,' 'better skill,' 'skill market,' 'is my skill the best,' or 'skill competition.' Scores alternatives by keyword overlap, popularity, recency, and activity. For finding skills, see janitor-search. For usage data, see janitor-usage."
 metadata:
   version: 1.2.0
 ---
@@ -51,6 +51,6 @@ Analyzing: skills-janitor
 
 ## Related Skills
 
-- For finding skills by keyword: `/jan-search`
-- For checking your usage: `/jan-usage`
-- For full inventory: `/jan-audit`
+- For finding skills by keyword: `/janitor-search`
+- For checking your usage: `/janitor-usage`
+- For full inventory: `/janitor-audit`
