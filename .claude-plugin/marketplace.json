@@ -1,0 +1,31 @@
+{
+  "name": "skills-janitor",
+  "owner": {
+    "name": "Krzysztof Hendzel",
+    "url": "https://github.com/khendzel"
+  },
+  "metadata": {
+    "description": "Audit, track usage, and compare your Claude Code skills. 9 actions, zero dependencies.",
+    "version": "1.2.0",
+    "repository": "https://github.com/khendzel/skills-janitor"
+  },
+  "plugins": [
+    {
+      "name": "skills-janitor",
+      "description": "9 skill hygiene tools: audit, deduplicate, lint, fix, prune, report, usage tracking, GitHub search, and market comparison.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/jan-audit",
+        "./skills/jan-dupes",
+        "./skills/jan-lint",
+        "./skills/jan-fix",
+        "./skills/jan-prune",
+        "./skills/jan-report",
+        "./skills/jan-usage",
+        "./skills/jan-search",
+        "./skills/jan-compare"
+      ]
+    }
+  ]
+}

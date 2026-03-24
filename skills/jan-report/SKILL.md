@@ -1,0 +1,49 @@
+---
+name: jan-report
+description: "When the user wants a full health report on their Claude Code skills. Also use when the user mentions 'skill report,' 'skill health,' 'skills health check,' 'skills overview,' 'review Claude Code setup,' or 'spring cleaning skills.' Combines audit, lint, and duplicate data into one summary. For individual checks, see jan-audit, jan-lint, jan-dupes."
+metadata:
+  version: 1.2.0
+---
+
+# Health Report
+
+Generate a comprehensive health report combining audit, lint, and duplicate detection results.
+
+## How to Run
+
+Run all three analysis scripts and combine results:
+
+```bash
+bash ~/.claude/skills/skills-janitor/scripts/scan.sh
+bash ~/.claude/skills/skills-janitor/scripts/lint.sh
+bash ~/.claude/skills/skills-janitor/scripts/detect_dupes.sh
+```
+
+## Report Format
+
+Present a unified report with:
+
+### Summary Table
+```
+| Skill              | Scope   | Status      | Issues                          |
+|--------------------|---------|-------------|---------------------------------|
+| marketing-copy     | user    | OK          | -                               |
+| seo-audit          | user    | WARNING     | Description too short (28 chars) |
+| old-deploy-helper  | user    | CRITICAL    | Broken symlink                  |
+| marketing-copy-v2  | user    | DUPLICATE?  | 72% overlap with marketing-copy |
+```
+
+### Severity Levels
+- `CRITICAL` - broken skills, missing files (fix immediately)
+- `WARNING` - suboptimal configuration (should fix)
+- `INFO` - suggestions for improvement (nice to have)
+
+### Recommended Actions
+For each issue found, suggest a specific fix with the relevant jan- command.
+
+## Related Skills
+
+- For inventory only: `/jan-audit`
+- For lint only: `/jan-lint`
+- For duplicates only: `/jan-dupes`
+- For usage analytics: `/jan-usage`
