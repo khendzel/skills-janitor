@@ -6,13 +6,14 @@ set -euo pipefail
 
 command -v python3 &>/dev/null || { echo "ERROR: python3 required" >&2; exit 1; }
 
+# --- Load platform paths ---
+source "$(dirname "$0")/paths.sh"
+
 # --- Defaults ---
 JSON_OUTPUT=false
 BUDGET=200000
 WEEKS=4
 DATA_DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
-USER_SKILLS="$HOME/.claude/skills"
-PROJECT_SKILLS="./.claude/skills"
 
 # --- Parse args ---
 while [[ $# -gt 0 ]]; do
@@ -65,13 +66,9 @@ scan_skills() {
     done
 }
 
-scan_skills "$USER_SKILLS" "user"
-
-USER_REAL=$(cd "$USER_SKILLS" 2>/dev/null && pwd -P || echo "")
-PROJECT_REAL=$(cd "$PROJECT_SKILLS" 2>/dev/null && pwd -P || echo "")
-if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
-    scan_skills "$PROJECT_SKILLS" "project"
-fi
+# Scan all platforms (Claude Code + Codex)
+_token_scan() { scan_skills "$1" "$2"; }
+for_each_skill_dir _token_scan
 
 # --- Export for Python ---
 export JSON_OUTPUT BUDGET WEEKS DATA_DIR

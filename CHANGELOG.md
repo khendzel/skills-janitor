@@ -3,6 +3,7 @@
 ## v1.1.0 (2026-04-15)
 
 ### New
+- **Cross-platform support** - works with both Claude Code and OpenAI Codex
 - `/janitor-precheck` - check overlap before installing a new skill
 - `/janitor-tokens` - show context window token cost per skill
 

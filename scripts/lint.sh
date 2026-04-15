@@ -4,8 +4,11 @@
 
 set -euo pipefail
 
-USER_SKILLS="$HOME/.claude/skills"
-PROJECT_SKILLS="./.claude/skills"
+# --- Load platform paths ---
+source "$(dirname "$0")/paths.sh"
+
+USER_SKILLS="$CLAUDE_USER_SKILLS"
+PROJECT_SKILLS="$CLAUDE_PROJECT_SKILLS"
 
 ISSUES=0
 WARNINGS=0
@@ -135,6 +138,28 @@ if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
         [[ -d "$skill_dir" ]] || continue
         lint_skill "${skill_dir%/}" "project"
     done
+fi
+
+# Scan Codex skills
+if [[ -d "$CODEX_USER_SKILLS" ]]; then
+    echo ""
+    echo "--- Codex User Skills ($CODEX_USER_SKILLS) ---"
+    for skill_dir in "$CODEX_USER_SKILLS"/*/; do
+        [[ -d "$skill_dir" ]] || continue
+        lint_skill "${skill_dir%/}" "codex-user"
+    done
+fi
+if [[ -d "$CODEX_PROJECT_SKILLS" ]]; then
+    CODEX_P_REAL=$(cd "$CODEX_PROJECT_SKILLS" 2>/dev/null && pwd -P || echo "")
+    CODEX_U_REAL=$(cd "$CODEX_USER_SKILLS" 2>/dev/null && pwd -P || echo "")
+    if [[ "$CODEX_P_REAL" != "$CODEX_U_REAL" ]]; then
+        echo ""
+        echo "--- Codex Project Skills ($CODEX_PROJECT_SKILLS) ---"
+        for skill_dir in "$CODEX_PROJECT_SKILLS"/*/; do
+            [[ -d "$skill_dir" ]] || continue
+            lint_skill "${skill_dir%/}" "codex-project"
+        done
+    fi
 fi
 
 echo ""

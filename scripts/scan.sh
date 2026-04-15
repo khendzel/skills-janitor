@@ -6,17 +6,24 @@ set -euo pipefail
 
 command -v python3 &>/dev/null || { echo "ERROR: python3 required" >&2; exit 1; }
 
-USER_SKILLS="$HOME/.claude/skills"
+# --- Load platform paths ---
+source "$(dirname "$0")/paths.sh"
+
+# Claude-specific paths
+USER_SKILLS="$CLAUDE_USER_SKILLS"
 USER_COMMANDS="$HOME/.claude/commands"
 PLUGINS_DIR="$HOME/.claude/plugins"
 SOURCES_DIR="$HOME/.claude/sources"
-# Also check account-level plugin dirs
 ACCOUNT_PLUGINS_PERSONAL="$HOME/.claude-account-personal/plugins"
 ACCOUNT_PLUGINS_COMPANY="$HOME/.claude-account-company/plugins"
 
-# Project scope (current directory)
-PROJECT_SKILLS="./.claude/skills"
+# Project scope
+PROJECT_SKILLS="$CLAUDE_PROJECT_SKILLS"
 PROJECT_COMMANDS="./.claude/commands"
+
+# Codex paths
+CODEX_USER="$CODEX_USER_SKILLS"
+CODEX_PROJECT="$CODEX_PROJECT_SKILLS"
 
 scan_skill() {
     local path="$1"
@@ -142,6 +149,36 @@ if [[ -d "$PROJECT_SKILLS" ]]; then
         fi
         scan_skill "${skill_dir%/}" "project"
     done
+fi
+
+# Scan Codex user-level skills
+if [[ -d "$CODEX_USER" ]]; then
+    for skill_dir in "$CODEX_USER"/*/; do
+        [[ -d "$skill_dir" ]] || continue
+        if [[ "$first" == "true" ]]; then
+            first=false
+        else
+            echo ","
+        fi
+        scan_skill "${skill_dir%/}" "codex-user"
+    done
+fi
+
+# Scan Codex project-level skills
+if [[ -d "$CODEX_PROJECT" ]]; then
+    CODEX_P_REAL=$(cd "$CODEX_PROJECT" 2>/dev/null && pwd -P || echo "")
+    CODEX_U_REAL=$(cd "$CODEX_USER" 2>/dev/null && pwd -P || echo "")
+    if [[ "$CODEX_P_REAL" != "$CODEX_U_REAL" ]]; then
+        for skill_dir in "$CODEX_PROJECT"/*/; do
+            [[ -d "$skill_dir" ]] || continue
+            if [[ "$first" == "true" ]]; then
+                first=false
+            else
+                echo ","
+            fi
+            scan_skill "${skill_dir%/}" "codex-project"
+        done
+    fi
 fi
 
 echo ""

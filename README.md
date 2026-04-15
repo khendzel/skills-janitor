@@ -1,13 +1,16 @@
 # Skills Janitor
 
-> Audit, track usage, and manage your Claude Code skills - 7 focused skills, zero dependencies.
+> Audit, track usage, and manage your AI coding skills - 7 focused skills, zero dependencies.
+
+Works with **Claude Code** and **OpenAI Codex**.
 
 ![Skills Janitor](demo.gif)
 
-A plugin for [Claude Code](https://claude.ai/claude-code) that keeps your skills ecosystem clean, organized, and healthy.
+A plugin that keeps your skills ecosystem clean, organized, and healthy. Automatically detects and scans skills from both Claude Code (`~/.claude/skills/`) and OpenAI Codex (`~/.agents/skills/`).
 
 ## What's New in v1.1
 
+- **Cross-platform** - works with both Claude Code and OpenAI Codex
 - **Pre-install overlap check** - check if a new skill duplicates existing ones before installing
 - **Context window token cost** - see how many tokens each skill consumes and find unused waste
 - **Consolidated from 9 to 7 commands** - fewer commands, same coverage
@@ -116,6 +119,15 @@ Check if a new skill overlaps with existing ones before installing:
 - Never modifies plugin/marketplace skills
 - Respects that some overlap is intentional
 - Dry-run by default for all destructive operations
+
+## Supported Platforms
+
+| Platform | User skills | Project skills | Usage tracking |
+|----------|-------------|----------------|----------------|
+| Claude Code | `~/.claude/skills/` | `./.claude/skills/` | Full (history.jsonl) |
+| OpenAI Codex | `~/.agents/skills/` | `./.agents/skills/` | Keyword matching |
+
+Skills Janitor auto-detects which platforms are installed and scans all of them.
 
 ## Requirements
 

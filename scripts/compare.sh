@@ -11,7 +11,11 @@ command -v curl &>/dev/null || { echo "ERROR: curl required" >&2; exit 1; }
 SKILL_NAME=""
 JSON_OUTPUT=false
 DATA_DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
-USER_SKILLS="$HOME/.claude/skills"
+
+# --- Load platform paths ---
+source "$(dirname "$0")/paths.sh"
+
+USER_SKILLS="$CLAUDE_USER_SKILLS"
 INSTALL_COUNTS="$HOME/.claude/plugins/install-counts-cache.json"
 
 # --- Parse args ---
@@ -42,7 +46,7 @@ fi
 
 # --- Find the skill locally ---
 SKILL_PATH=""
-for dir in "$USER_SKILLS/$SKILL_NAME" "./.claude/skills/$SKILL_NAME"; do
+for dir in "$CLAUDE_USER_SKILLS/$SKILL_NAME" "$CLAUDE_PROJECT_SKILLS/$SKILL_NAME" "$CODEX_USER_SKILLS/$SKILL_NAME" "$CODEX_PROJECT_SKILLS/$SKILL_NAME"; do
     if [[ -d "$dir" ]]; then
         SKILL_PATH="$dir"
         break
@@ -50,7 +54,7 @@ for dir in "$USER_SKILLS/$SKILL_NAME" "./.claude/skills/$SKILL_NAME"; do
 done
 
 if [[ -z "$SKILL_PATH" ]]; then
-    echo "ERROR: Skill '$SKILL_NAME' not found in $USER_SKILLS or ./.claude/skills/" >&2
+    echo "ERROR: Skill '$SKILL_NAME' not found in any skill directory" >&2
     exit 1
 fi
 

@@ -7,11 +7,12 @@ set -euo pipefail
 command -v python3 &>/dev/null || { echo "ERROR: python3 required" >&2; exit 1; }
 command -v curl &>/dev/null || { echo "ERROR: curl required" >&2; exit 1; }
 
+# --- Load platform paths ---
+source "$(dirname "$0")/paths.sh"
+
 # --- Defaults ---
 SOURCE=""
 JSON_OUTPUT=false
-USER_SKILLS="$HOME/.claude/skills"
-PROJECT_SKILLS="./.claude/skills"
 
 # --- Parse args ---
 while [[ $# -gt 0 ]]; do
@@ -71,13 +72,9 @@ extract_skills() {
     done
 }
 
-extract_skills "$USER_SKILLS" "user"
-
-USER_REAL=$(cd "$USER_SKILLS" 2>/dev/null && pwd -P || echo "")
-PROJECT_REAL=$(cd "$PROJECT_SKILLS" 2>/dev/null && pwd -P || echo "")
-if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
-    extract_skills "$PROJECT_SKILLS" "project"
-fi
+# Scan all platforms (Claude Code + Codex)
+_precheck_scan() { extract_skills "$1" "$2"; }
+for_each_skill_dir _precheck_scan
 
 # --- Fetch or read the new skill ---
 NEW_SKILL_CONTENT=""

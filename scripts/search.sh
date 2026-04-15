@@ -14,7 +14,11 @@ LIMIT=10
 JSON_OUTPUT=false
 DATA_DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-USER_SKILLS="$HOME/.claude/skills"
+
+# --- Load platform paths ---
+source "$(dirname "$0")/paths.sh"
+
+USER_SKILLS="$CLAUDE_USER_SKILLS"
 
 # --- Parse args ---
 while [[ $# -gt 0 ]]; do
@@ -199,9 +203,16 @@ if results is None:
 
 # --- Cross-reference with installed skills ---
 installed_skills = set()
+# Check Claude Code skills
 if USER_SKILLS and os.path.isdir(USER_SKILLS):
     for name in os.listdir(USER_SKILLS):
         if os.path.isdir(os.path.join(USER_SKILLS, name)):
+            installed_skills.add(name.lower())
+# Check Codex skills
+codex_skills = os.path.expanduser("~/.agents/skills")
+if os.path.isdir(codex_skills):
+    for name in os.listdir(codex_skills):
+        if os.path.isdir(os.path.join(codex_skills, name)):
             installed_skills.add(name.lower())
 
 # Also check installed plugins

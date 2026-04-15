@@ -6,8 +6,8 @@ set -euo pipefail
 
 command -v python3 &>/dev/null || { echo "ERROR: python3 required" >&2; exit 1; }
 
-USER_SKILLS="$HOME/.claude/skills"
-PROJECT_SKILLS="./.claude/skills"
+# --- Load platform paths ---
+source "$(dirname "$0")/paths.sh"
 
 # Collect all skill descriptions into a temp file
 export TMPFILE=$(mktemp)
@@ -40,14 +40,9 @@ extract_skills() {
     done
 }
 
-extract_skills "$USER_SKILLS" "user"
-
-# Only scan project skills if they're different from user skills
-USER_REAL=$(cd "$USER_SKILLS" 2>/dev/null && pwd -P || echo "")
-PROJECT_REAL=$(cd "$PROJECT_SKILLS" 2>/dev/null && pwd -P || echo "")
-if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
-    extract_skills "$PROJECT_SKILLS" "project"
-fi
+# Scan all platforms (Claude Code + Codex)
+_dupes_scan() { extract_skills "$1" "$2"; }
+for_each_skill_dir _dupes_scan
 
 echo "=== Skills Janitor - Duplicate Detection ==="
 echo ""

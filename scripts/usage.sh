@@ -24,14 +24,18 @@ done
 # --- Export for Python ---
 export WEEKS JSON_OUTPUT DATA_DIR
 
+# --- Load platform paths ---
+source "$(dirname "$0")/paths.sh"
+
 # --- Paths ---
-USER_SKILLS="$HOME/.claude/skills"
-PROJECT_SKILLS="./.claude/skills"
+USER_SKILLS="$CLAUDE_USER_SKILLS"
+PROJECT_SKILLS="$CLAUDE_PROJECT_SKILLS"
 HISTORY_FILE="$HOME/.claude-account-personal/history.jsonl"
 
 if [[ ! -f "$HISTORY_FILE" ]]; then
-    echo "ERROR: History file not found at $HISTORY_FILE" >&2
-    exit 1
+    echo "WARNING: Claude history file not found at $HISTORY_FILE" >&2
+    echo "Usage tracking requires Claude Code conversation history." >&2
+    # Don't exit - still scan skills for inventory
 fi
 
 # --- Ensure data dir exists ---
@@ -67,14 +71,9 @@ collect_skills() {
     done
 }
 
-collect_skills "$USER_SKILLS" "user"
-
-# Only scan project skills if different from user skills
-USER_REAL=$(cd "$USER_SKILLS" 2>/dev/null && pwd -P || echo "")
-PROJECT_REAL=$(cd "$PROJECT_SKILLS" 2>/dev/null && pwd -P || echo "")
-if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
-    collect_skills "$PROJECT_SKILLS" "project"
-fi
+# Scan all platforms (Claude Code + Codex)
+_usage_scan() { collect_skills "$1" "$2"; }
+for_each_skill_dir _usage_scan
 
 # --- Run analysis ---
 python3 << 'PYEOF'
@@ -171,14 +170,16 @@ with open(HISTORY_FILE) as f:
 
         week_key = entry_time.strftime("%Y-W%W")
 
-        # --- Explicit slash command detection ---
-        if display.startswith("/"):
+        # --- Explicit command detection (Claude / and Codex $.) ---
+        is_slash = display.startswith("/")
+        is_dollar = display.startswith("$.")
+        if is_slash or is_dollar:
             cmd = display.split()[0].rstrip()
-            if cmd in SYSTEM_COMMANDS:
+            if is_slash and cmd in SYSTEM_COMMANDS:
                 continue
 
             # Match against known skills
-            cmd_name = cmd.lstrip("/")
+            cmd_name = cmd.lstrip("/").lstrip("$.")
             for s in skills:
                 if cmd_name == s["name"] or cmd_name.startswith(s["name"] + " "):
                     explicit_counts[s["name"]][week_key] += 1

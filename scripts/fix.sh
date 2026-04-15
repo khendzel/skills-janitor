@@ -7,8 +7,11 @@ set -euo pipefail
 
 command -v python3 &>/dev/null || { echo "ERROR: python3 required" >&2; exit 1; }
 
-USER_SKILLS="$HOME/.claude/skills"
-PROJECT_SKILLS="./.claude/skills"
+# --- Load platform paths ---
+source "$(dirname "$0")/paths.sh"
+
+USER_SKILLS="$CLAUDE_USER_SKILLS"
+PROJECT_SKILLS="$CLAUDE_PROJECT_SKILLS"
 DATA_DIR="$HOME/.claude/skills/skills-janitor/data"
 CHANGELOG="$DATA_DIR/changelog.log"
 
@@ -203,6 +206,28 @@ if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
     done
 fi
 
+# Scan Codex skills
+if [[ -d "$CODEX_USER_SKILLS" ]]; then
+    echo ""
+    echo "--- Codex User Skills ($CODEX_USER_SKILLS) ---"
+    for skill_dir in "$CODEX_USER_SKILLS"/*/; do
+        [[ -d "$skill_dir" ]] || continue
+        fix_skill "${skill_dir%/}" "codex-user"
+    done
+fi
+if [[ -d "$CODEX_PROJECT_SKILLS" ]]; then
+    CODEX_P_REAL=$(cd "$CODEX_PROJECT_SKILLS" 2>/dev/null && pwd -P || echo "")
+    CODEX_U_REAL=$(cd "$CODEX_USER_SKILLS" 2>/dev/null && pwd -P || echo "")
+    if [[ "$CODEX_P_REAL" != "$CODEX_U_REAL" ]]; then
+        echo ""
+        echo "--- Codex Project Skills ($CODEX_PROJECT_SKILLS) ---"
+        for skill_dir in "$CODEX_PROJECT_SKILLS"/*/; do
+            [[ -d "$skill_dir" ]] || continue
+            fix_skill "${skill_dir%/}" "codex-project"
+        done
+    fi
+fi
+
 # --- Prune mode ---
 PRUNED=0
 if [[ "$PRUNE" == "true" ]]; then
@@ -266,6 +291,12 @@ if [[ "$PRUNE" == "true" ]]; then
     prune_dir "$USER_SKILLS" "user"
     if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
         prune_dir "$PROJECT_SKILLS" "project"
+    fi
+    [[ -d "$CODEX_USER_SKILLS" ]] && prune_dir "$CODEX_USER_SKILLS" "codex-user"
+    if [[ -d "$CODEX_PROJECT_SKILLS" ]]; then
+        CODEX_P_REAL=$(cd "$CODEX_PROJECT_SKILLS" 2>/dev/null && pwd -P || echo "")
+        CODEX_U_REAL=$(cd "$CODEX_USER_SKILLS" 2>/dev/null && pwd -P || echo "")
+        [[ "$CODEX_P_REAL" != "$CODEX_U_REAL" ]] && prune_dir "$CODEX_PROJECT_SKILLS" "codex-project"
     fi
 
     if [[ "$PRUNED" -eq 0 ]]; then
