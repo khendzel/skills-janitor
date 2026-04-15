@@ -9,9 +9,11 @@ command -v curl &>/dev/null || { echo "ERROR: curl required" >&2; exit 1; }
 
 # --- Defaults ---
 KEYWORD=""
+COMPARE=""
 LIMIT=10
 JSON_OUTPUT=false
 DATA_DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 USER_SKILLS="$HOME/.claude/skills"
 
 # --- Parse args ---
@@ -19,10 +21,13 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --limit) LIMIT="$2"; shift 2 ;;
         --json) JSON_OUTPUT=true; shift ;;
+        --compare) COMPARE="$2"; shift 2 ;;
         -h|--help)
             echo "Usage: search.sh <keyword> [--limit N] [--json]"
+            echo "       search.sh --compare <skill-name> [--json]"
             echo ""
             echo "Searches GitHub for Claude Code skills matching the keyword."
+            echo "Use --compare to analyze a local skill against GitHub alternatives."
             echo "Set GITHUB_TOKEN env var for higher rate limits and code search."
             exit 0
             ;;
@@ -37,6 +42,13 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# If --compare mode, delegate to compare.sh
+if [[ -n "$COMPARE" ]]; then
+    COMPARE_ARGS=("$COMPARE")
+    [[ "$JSON_OUTPUT" == "true" ]] && COMPARE_ARGS+=("--json")
+    exec bash "$SCRIPT_DIR/compare.sh" "${COMPARE_ARGS[@]}"
+fi
 
 if [[ -z "$KEYWORD" ]]; then
     echo "ERROR: Keyword required. Usage: search.sh <keyword> [--limit N] [--json]" >&2

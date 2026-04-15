@@ -14,11 +14,13 @@ CHANGELOG="$DATA_DIR/changelog.log"
 
 DRY_RUN=true
 APPLY=false
+PRUNE=false
 
 for arg in "$@"; do
     case "$arg" in
         --apply) DRY_RUN=false; APPLY=true ;;
         --dry-run) DRY_RUN=true ;;
+        --prune) PRUNE=true ;;
     esac
 done
 
@@ -201,11 +203,85 @@ if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
     done
 fi
 
+# --- Prune mode ---
+PRUNED=0
+if [[ "$PRUNE" == "true" ]]; then
+    echo ""
+    echo "--- Prune: Finding broken/orphaned skills ---"
+
+    prune_dir() {
+        local dir="$1"
+        local scope="$2"
+        [[ -d "$dir" ]] || return
+
+        for skill_dir in "$dir"/*/; do
+            [[ -d "$skill_dir" || -L "${skill_dir%/}" ]] || continue
+            local name
+            name=$(basename "${skill_dir%/}")
+            [[ "$name" == "skills-janitor" ]] && continue
+
+            local path="${skill_dir%/}"
+
+            # Check broken symlinks
+            if [[ -L "$path" && ! -e "$path" ]]; then
+                local target
+                target=$(readlink "$path" 2>/dev/null || echo "unknown")
+                if [[ "$DRY_RUN" == "true" ]]; then
+                    echo "  [DRY RUN] $name: Broken symlink -> $target (would remove)"
+                else
+                    rm -f "$path"
+                    echo "  [PRUNED]  $name: Removed broken symlink -> $target"
+                    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $name: Pruned broken symlink -> $target" >> "$CHANGELOG"
+                fi
+                ((PRUNED++)) || true
+                continue
+            fi
+
+            # Check empty directories (no SKILL.md)
+            if [[ -d "$path" ]]; then
+                local has_skill=false
+                [[ -f "$path/SKILL.md" ]] && has_skill=true
+                [[ -f "$path/Skill.md" ]] && has_skill=true
+
+                if [[ "$has_skill" == "false" ]]; then
+                    local file_count
+                    file_count=$(find "$path" -type f 2>/dev/null | wc -l | tr -d ' ')
+                    if [[ "$file_count" -eq 0 ]]; then
+                        if [[ "$DRY_RUN" == "true" ]]; then
+                            echo "  [DRY RUN] $name: Empty directory (would remove)"
+                        else
+                            rm -rf "$path"
+                            echo "  [PRUNED]  $name: Removed empty directory"
+                            echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $name: Pruned empty directory" >> "$CHANGELOG"
+                        fi
+                        ((PRUNED++)) || true
+                    else
+                        echo "  [SKIP]    $name: No SKILL.md but has $file_count files (review manually)"
+                    fi
+                fi
+            fi
+        done
+    }
+
+    prune_dir "$USER_SKILLS" "user"
+    if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
+        prune_dir "$PROJECT_SKILLS" "project"
+    fi
+
+    if [[ "$PRUNED" -eq 0 ]]; then
+        echo "  No broken or orphaned skills found."
+    fi
+fi
+
 echo ""
 echo "=== Summary ==="
 echo "  Fixable issues: $FIXES"
 echo "  Skipped:        $SKIPPED"
-if [[ "$DRY_RUN" == "true" && "$FIXES" -gt 0 ]]; then
+if [[ "$PRUNE" == "true" ]]; then
+    echo "  Prunable:       $PRUNED"
+fi
+TOTAL=$((FIXES + PRUNED))
+if [[ "$DRY_RUN" == "true" && "$TOTAL" -gt 0 ]]; then
     echo ""
     echo "  Run with --apply to make these changes."
 fi
