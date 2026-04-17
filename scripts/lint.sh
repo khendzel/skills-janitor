@@ -47,7 +47,7 @@ lint_skill() {
     [[ -f "$path/Skill.md" ]] && skill_file="$path/Skill.md"
 
     if [[ -z "$skill_file" ]]; then
-        print_issue "critical" "$name" "No SKILL.md file found"
+        # No SKILL.md = support folder (_shared, _docs, _temp, plugin dirs, etc.) — skip silently
         return
     fi
 
@@ -78,22 +78,44 @@ lint_skill() {
         print_issue "info" "$name" "Folder name '$name' doesn't match skill name '$name_field'"
     fi
 
-    # Check description field
+    # Check description field — supports both inline and block scalar (|, >)
+    local desc_raw
+    desc_raw=$(echo "$frontmatter" | grep -E '^description:' | sed 's/^description:\s*//' | xargs 2>/dev/null || echo "")
+
     local desc
-    desc=$(echo "$frontmatter" | grep -E '^description:' | sed 's/^description:\s*//' | tr -d '"' | tr -d "'" | xargs 2>/dev/null || echo "")
+    if [[ -z "$desc_raw" || "$desc_raw" == "|" || "$desc_raw" == ">" ]]; then
+        # Block scalar: collect indented lines following 'description:'
+        desc=$(echo "$frontmatter" | awk '
+            /^description:/ { capture=1; next }
+            capture && /^[[:space:]]+/ { line=$0; sub(/^[[:space:]]+/, "", line); printf "%s ", line }
+            capture && /^[^[:space:]]/ { exit }
+        ' | sed 's/[[:space:]]*$//')
+    else
+        desc="$desc_raw"
+    fi
+
     if [[ -z "$desc" ]]; then
         print_issue "critical" "$name" "Missing 'description' field - Claude can't trigger this skill"
     else
         local desc_len=${#desc}
+
+        # Length check
         if [[ $desc_len -lt 30 ]]; then
             print_issue "warning" "$name" "Description too short ($desc_len chars) - should be 50-200 for good triggering"
-        elif [[ $desc_len -gt 250 ]]; then
-            print_issue "info" "$name" "Description is long ($desc_len chars) - consider trimming to < 200"
+        elif [[ $desc_len -gt 500 ]]; then
+            print_issue "info" "$name" "Description is long ($desc_len chars) - consider trimming to < 300"
         fi
 
-        # Check if description has trigger words
+        # Trigger word check
         if ! echo "$desc" | grep -qi -E '(when|trigger|use for|invoke|mention|says|asks|also use|use this|relevant|appropriate|helps with|designed for)'; then
             print_issue "warning" "$name" "Description doesn't explain when to trigger - add 'Use when...' or 'Also use when...'"
+        fi
+
+        # Check disable-model-invocation: auto-loaded skills need a meaningful description
+        local dmi
+        dmi=$(echo "$frontmatter" | grep -E '^disable-model-invocation:' | sed 's/^disable-model-invocation:\s*//' | xargs 2>/dev/null || echo "")
+        if [[ "$dmi" == "true" && $desc_len -lt 50 ]]; then
+            print_issue "warning" "$name" "Skill uses disable-model-invocation but description is very short — Claude may not trigger it correctly"
         fi
     fi
 
