@@ -60,8 +60,6 @@ import sys
 from collections import defaultdict
 
 skills = []
-with open(sys.argv[1] if len(sys.argv) > 1 else "/dev/stdin") as f:
-    pass
 
 # Read from the temp file
 import os
