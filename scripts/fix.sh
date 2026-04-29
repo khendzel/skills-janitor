@@ -154,19 +154,43 @@ description: "Use when the user wants to use '"$name"'. Add specific trigger phr
         fi
 
         # Fix 4: Add missing version field
-        local has_version
-        if echo "$frontmatter" | grep -q '^version:' 2>/dev/null; then has_version=1; else has_version=0; fi
-        if [[ "$has_version" -eq 0 ]]; then
-            # Add version after description or name
+        # Recognize both top-level `version:` and nested `metadata.version` (the
+        # canonical layout used by skills installed via `npx skills add`).
+        # Without the nested check, --apply would inject a duplicate top-level
+        # version: line into every modern skill, corrupting the frontmatter.
+        local has_version=0 has_metadata=0
+        if echo "$frontmatter" | grep -q '^version:' 2>/dev/null; then
+            has_version=1
+        elif echo "$frontmatter" | grep -qE '^[[:space:]]+version:[[:space:]]' 2>/dev/null; then
+            has_version=1
+        fi
+        if echo "$frontmatter" | grep -q '^metadata:' 2>/dev/null; then
+            has_metadata=1
+        fi
+        if [[ "$has_version" -eq 0 && "$has_metadata" -eq 1 ]]; then
+            # Existing `metadata:` block but no version under it — auto-injection
+            # would risk producing duplicate or malformed metadata blocks.
+            # Surface this for manual review instead of attempting a fix.
+            log_change "$name" "metadata: block exists but version missing — add 'version: \"1.0.0\"' under it manually"
+        elif [[ "$has_version" -eq 0 ]]; then
+            # No version anywhere — inject the canonical nested form via awk.
+            # awk is used instead of `sed a\` because BSD sed (macOS) does not
+            # insert a trailing newline after the appended block, which makes
+            # the following line (typically `---`) collide with the inserted text.
+            local anchor=""
             if echo "$new_content" | grep -q '^description:'; then
-                new_content=$(echo "$new_content" | sed '/^description:/a\
-version: "1.0.0"')
+                anchor="description:"
             elif echo "$new_content" | grep -q '^name:'; then
-                new_content=$(echo "$new_content" | sed '/^name:/a\
-version: "1.0.0"')
+                anchor="name:"
             fi
-            modified=true
-            log_change "$name" "Added missing version field (1.0.0)"
+            if [[ -n "$anchor" ]]; then
+                new_content=$(echo "$new_content" | awk -v a="^$anchor" '
+                    $0 ~ a && !done { print; print "metadata:"; print "  version: \"1.0.0\""; done=1; next }
+                    { print }
+                ')
+                modified=true
+                log_change "$name" "Added missing metadata.version field (1.0.0)"
+            fi
         fi
     fi
 
