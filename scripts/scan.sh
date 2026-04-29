@@ -25,6 +25,8 @@ PROJECT_COMMANDS="./.claude/commands"
 CODEX_USER="$CODEX_USER_SKILLS"
 CODEX_PROJECT="$CODEX_PROJECT_SKILLS"
 
+FIRST_SKILL=true
+
 scan_skill() {
     local path="$1"
     local scope="$2"
@@ -99,6 +101,14 @@ scan_skill() {
     json_desc=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$description" 2>/dev/null || echo '""')
     json_version=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$version" 2>/dev/null || echo '""')
 
+    # Emit comma separator only after the first object — comma must follow a real
+    # object, not an early-returned skip, otherwise the JSON ends up with double commas.
+    if [[ "$FIRST_SKILL" == "true" ]]; then
+        FIRST_SKILL=false
+    else
+        echo ","
+    fi
+
     # Output as JSON object
     cat <<ENDJSON
   {
@@ -123,17 +133,10 @@ echo "{"
 echo '  "scan_date": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",'
 echo '  "skills": ['
 
-first=true
-
 # Scan user-level skills
 if [[ -d "$USER_SKILLS" ]]; then
     for skill_dir in "$USER_SKILLS"/*/; do
         [[ -d "$skill_dir" ]] || continue
-        if [[ "$first" == "true" ]]; then
-            first=false
-        else
-            echo ","
-        fi
         scan_skill "${skill_dir%/}" "user"
     done
 fi
@@ -142,11 +145,6 @@ fi
 if [[ -d "$PROJECT_SKILLS" ]]; then
     for skill_dir in "$PROJECT_SKILLS"/*/; do
         [[ -d "$skill_dir" ]] || continue
-        if [[ "$first" == "true" ]]; then
-            first=false
-        else
-            echo ","
-        fi
         scan_skill "${skill_dir%/}" "project"
     done
 fi
@@ -155,11 +153,6 @@ fi
 if [[ -d "$CODEX_USER" ]]; then
     for skill_dir in "$CODEX_USER"/*/; do
         [[ -d "$skill_dir" ]] || continue
-        if [[ "$first" == "true" ]]; then
-            first=false
-        else
-            echo ","
-        fi
         scan_skill "${skill_dir%/}" "codex-user"
     done
 fi
@@ -171,11 +164,6 @@ if [[ -d "$CODEX_PROJECT" ]]; then
     if [[ "$CODEX_P_REAL" != "$CODEX_U_REAL" ]]; then
         for skill_dir in "$CODEX_PROJECT"/*/; do
             [[ -d "$skill_dir" ]] || continue
-            if [[ "$first" == "true" ]]; then
-                first=false
-            else
-                echo ","
-            fi
             scan_skill "${skill_dir%/}" "codex-project"
         done
     fi
