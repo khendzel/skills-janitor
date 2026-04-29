@@ -36,7 +36,14 @@ extract_skills() {
         local desc
         desc=$(awk 'NR==1 && /^---$/{started=1; next} started && /^---$/{exit} started && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/"/,""); print}' "$skill_file" | tr '[:upper:]' '[:lower:]')
 
-        printf '%s\t%s\t%s\n' "$scope" "$name" "$desc" >> "$TMPFILE"
+        # Resolve symlinks so the same physical SKILL.md gets one record,
+        # not one-per-shadow. ~/.claude/skills entries that symlink to
+        # ~/.agents/skills (the universal install) would otherwise be
+        # compared against themselves and reported as 100% duplicates.
+        local realpath
+        realpath=$(cd "$skill_dir" 2>/dev/null && pwd -P || echo "$skill_dir")
+
+        printf '%s\t%s\t%s\t%s\n' "$scope" "$name" "$realpath" "$desc" >> "$TMPFILE"
     done
 }
 
@@ -46,47 +53,73 @@ for_each_skill_dir _dupes_scan
 
 echo "=== Skills Janitor - Duplicate Detection ==="
 echo ""
-echo "Total skills scanned: $(wc -l < "$TMPFILE" | tr -d ' ')"
-echo ""
-
-# Extract trigger keywords from descriptions
-# Look for patterns like "when the user mentions X, Y, Z" or trigger words
-echo "--- Keyword Overlap Analysis ---"
+total_rows=$(wc -l < "$TMPFILE" | tr -d ' ')
+unique_paths=$(awk -F'\t' '{print $3}' "$TMPFILE" | sort -u | wc -l | tr -d ' ')
+echo "Total skill records: $total_rows"
+echo "Unique skill files (after symlink dedup): $unique_paths"
 echo ""
 
 python3 << 'PYEOF'
 import re
 import sys
+import os
 from collections import defaultdict
 
-skills = []
+raw_skills = []
 
-# Read from the temp file
-import os
 tmpfile = os.environ.get("TMPFILE", "")
 if not tmpfile:
-    # Fallback: read from the file passed as argument
     tmpfile = sys.argv[1] if len(sys.argv) > 1 else ""
 
 with open(tmpfile) as f:
     for line in f:
-        line = line.strip()
+        line = line.rstrip("\n")
         if not line:
             continue
-        parts = line.split("\t", 2)
-        if len(parts) < 3:
-            continue
-        scope, name, desc = parts
-        skills.append({"scope": scope, "name": name, "desc": desc})
+        parts = line.split("\t", 3)
+        # Tolerate older 3-column rows (no realpath) for forward compatibility
+        while len(parts) < 4:
+            parts.append("")
+        scope, name, realpath, desc = parts
+        raw_skills.append({"scope": scope, "name": name, "realpath": realpath, "desc": desc})
 
-if not skills:
+if not raw_skills:
     print("No skills found to analyze.")
     sys.exit(0)
 
-# Extract trigger keywords from descriptions
+# --- Dedupe by realpath ---
+# When ~/.claude/skills/foo is a symlink to ~/.agents/skills/foo, the same
+# physical SKILL.md is reachable from both Claude and Codex scopes. Without
+# dedup, the cross-product comparison flagged every shadow as a 100%
+# self-duplicate. Group by realpath; keep one canonical record per file
+# but remember every location it was reachable from.
+by_realpath = {}
+for s in raw_skills:
+    key = s["realpath"] or f"{s['scope']}/{s['name']}"
+    if key not in by_realpath:
+        by_realpath[key] = {
+            "name": s["name"],
+            "desc": s["desc"],
+            "realpath": s["realpath"],
+            "locations": [],
+        }
+    by_realpath[key]["locations"].append({"scope": s["scope"], "name": s["name"]})
+
+skills = list(by_realpath.values())
+
+# --- Detect name collisions across distinct realpaths ---
+# Two unrelated skills with the same name living at different paths is the
+# situation that confuses skill triggering. Surface these explicitly,
+# regardless of description similarity.
+by_name = defaultdict(list)
+for s in skills:
+    by_name[s["name"]].append(s)
+name_collisions = sorted(
+    [(n, lst) for n, lst in by_name.items() if len(lst) > 1],
+    key=lambda t: t[0],
+)
+
 def extract_keywords(desc):
-    """Extract meaningful trigger keywords from a description."""
-    # Remove common filler words
     stop_words = {"use", "when", "the", "user", "wants", "to", "or", "and", "a", "an",
                   "this", "skill", "also", "that", "for", "with", "in", "on", "of",
                   "is", "are", "it", "be", "as", "at", "by", "from", "their", "they",
@@ -96,46 +129,57 @@ def extract_keywords(desc):
                   "such", "than", "too", "very", "just", "only", "own", "same",
                   "mentions", "says", "asks", "help", "create", "make", "build",
                   "improve", "optimize", "review", "write", "generate", "set", "up"}
-
-    # Get words
     words = re.findall(r'[a-z]+', desc.lower())
-    keywords = set(w for w in words if w not in stop_words and len(w) > 2)
-    return keywords
+    return set(w for w in words if w not in stop_words and len(w) > 2)
 
-# Compare all pairs
+# Compare all pairs (now over deduped skills, so each pair is unique)
 overlaps = []
 for i in range(len(skills)):
     kw_i = extract_keywords(skills[i]["desc"])
+    if not kw_i:
+        continue
     for j in range(i + 1, len(skills)):
         kw_j = extract_keywords(skills[j]["desc"])
-        common = kw_i & kw_j
-        if not kw_i or not kw_j:
+        if not kw_j:
             continue
-        # Jaccard similarity
+        common = kw_i & kw_j
         union = kw_i | kw_j
         similarity = len(common) / len(union) if union else 0
-
-        if similarity > 0.3:  # Threshold for flagging
+        if similarity > 0.3:
             overlaps.append({
                 "skill_a": skills[i]["name"],
                 "skill_b": skills[j]["name"],
                 "similarity": round(similarity * 100),
                 "common_keywords": sorted(common)[:10],
-                "scope_a": skills[i]["scope"],
-                "scope_b": skills[j]["scope"],
+                "locations_a": skills[i]["locations"],
+                "locations_b": skills[j]["locations"],
             })
 
-# Sort by similarity descending
 overlaps.sort(key=lambda x: x["similarity"], reverse=True)
 
-if not overlaps:
-    print("No significant overlaps detected.")
-else:
+# --- Output ---
+if name_collisions:
+    print("--- Name Collisions ---")
+    print(f"Found {len(name_collisions)} skill name(s) at multiple distinct paths:\n")
+    for name, entries in name_collisions:
+        print(f"  {name}")
+        for e in entries:
+            scopes = ", ".join(sorted({l["scope"] for l in e["locations"]}))
+            print(f"    [{scopes}] {e['realpath']}")
+        print()
+
+if overlaps:
+    print("--- Description Overlap (Jaccard > 30%) ---")
     print(f"Found {len(overlaps)} potential overlap(s):\n")
     for o in overlaps:
+        scopes_a = ",".join(sorted({l["scope"] for l in o["locations_a"]}))
+        scopes_b = ",".join(sorted({l["scope"] for l in o["locations_b"]}))
         print(f"  [{o['similarity']}%] {o['skill_a']} <-> {o['skill_b']}")
-        print(f"       Scopes: {o['scope_a']}, {o['scope_b']}")
+        print(f"       Scopes: {scopes_a} / {scopes_b}")
         print(f"       Shared keywords: {', '.join(o['common_keywords'][:8])}")
         print()
+
+if not name_collisions and not overlaps:
+    print("No significant overlaps or name collisions detected.")
 
 PYEOF
