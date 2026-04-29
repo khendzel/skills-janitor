@@ -62,7 +62,13 @@ scan_skills() {
         local desc
         desc=$(awk 'NR==1 && /^---$/{started=1; next} started && /^---$/{exit} started && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/"/,""); print}' "$skill_file")
 
-        printf '%s\t%s\t%s\t%s\n' "$scope" "$name" "$word_count" "$desc" >> "$TMPFILE"
+        # Resolve symlinks so a single physical SKILL.md is counted once.
+        # ~/.claude/skills/foo and ~/.agents/skills/foo can be the same
+        # underlying file, which would otherwise inflate the total cost.
+        local realpath
+        realpath=$(cd "$skill_dir" 2>/dev/null && pwd -P || echo "$skill_dir")
+
+        printf '%s\t%s\t%s\t%s\t%s\n' "$scope" "$name" "$realpath" "$word_count" "$desc" >> "$TMPFILE"
     done
 }
 
@@ -87,26 +93,45 @@ DATA_DIR = os.environ.get("DATA_DIR", "")
 # Token approximation: ~1.3 tokens per word for English markdown
 TOKEN_RATIO = 1.3
 
-# --- Load skill data ---
-skills = []
+# --- Load skill data, deduping by realpath ---
+# Skills installed into both ~/.claude/skills and ~/.agents/skills (e.g. via
+# `npx skills add`) are usually one physical SKILL.md reachable from two
+# locations via symlink. The previous implementation counted both, doubling
+# the reported token cost and inflating "% of budget wasted".
+seen_paths = {}
 if TMPFILE and os.path.isfile(TMPFILE):
     with open(TMPFILE) as f:
         for line in f:
-            line = line.strip()
+            line = line.rstrip("\n")
             if not line:
                 continue
-            parts = line.split("\t", 3)
-            if len(parts) < 4:
+            parts = line.split("\t", 4)
+            # Tolerate older 4-column rows (no realpath) for forward compat.
+            if len(parts) == 4:
+                scope, name, word_count, desc = parts
+                realpath = ""
+            elif len(parts) == 5:
+                scope, name, realpath, word_count, desc = parts
+            else:
                 continue
-            scope, name, word_count, desc = parts
+            key = realpath or f"{scope}/{name}"
+            if key in seen_paths:
+                seen_paths[key]["scopes"].add(scope)
+                continue
             tokens = int(round(int(word_count) * TOKEN_RATIO))
-            skills.append({
+            seen_paths[key] = {
                 "name": name,
                 "scope": scope,
+                "scopes": {scope},
+                "realpath": realpath,
                 "words": int(word_count),
                 "tokens": tokens,
                 "description": desc[:80],
-            })
+            }
+
+skills = list(seen_paths.values())
+for s in skills:
+    s["scope"] = ",".join(sorted(s.pop("scopes")))
 
 # Sort by tokens descending
 skills.sort(key=lambda x: -x["tokens"])
