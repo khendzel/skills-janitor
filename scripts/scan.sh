@@ -176,16 +176,51 @@ echo "  ],"
 echo '  "plugins": ['
 first=true
 if [[ -f "$HOME/.claude/plugins/installed_plugins.json" ]]; then
-    # Just output the raw installed plugins
+    # Parse installed_plugins.json. Claude Code v2 emits
+    #   {"version": 2, "plugins": {"<name>@<source>": [{instance}, ...]}}
+    # Older Claude Code versions may emit a flat array — keep that path
+    # as a fallback so older installs still produce output.
     cat "$HOME/.claude/plugins/installed_plugins.json" | python3 -c '
 import json, sys
-data = json.load(sys.stdin)
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+
+records = []
+if isinstance(data, dict) and isinstance(data.get("plugins"), dict):
+    for key, instances in data["plugins"].items():
+        if "@" in key:
+            name, source = key.rsplit("@", 1)
+        else:
+            name, source = key, ""
+        if not isinstance(instances, list):
+            continue
+        for inst in instances:
+            if not isinstance(inst, dict):
+                continue
+            records.append({
+                "name": name,
+                "source": source,
+                "version": inst.get("version", ""),
+                "scope": inst.get("scope", ""),
+            })
+elif isinstance(data, list):
+    for p in data:
+        if not isinstance(p, dict):
+            continue
+        records.append({
+            "name": p.get("name", ""),
+            "version": p.get("version", ""),
+            "source": p.get("source", ""),
+        })
+
 first = True
-for p in data:
+for r in records:
     if not first:
         print(",")
     first = False
-    print(json.dumps({"name": p.get("name",""), "version": p.get("version",""), "source": p.get("source","")}, indent=4))
+    print(json.dumps(r, indent=4))
 ' 2>/dev/null || echo ""
 fi
 echo "  ],"
