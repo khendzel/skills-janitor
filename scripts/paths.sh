@@ -17,7 +17,9 @@ ALL_SKILL_DIRS=()
 
 add_dir() {
     local path="$1" scope="$2" platform="$3"
-    [[ -d "$path" ]] && ALL_SKILL_DIRS+=("$scope:$platform:$path")
+    if [[ -d "$path" ]]; then
+        ALL_SKILL_DIRS+=("$scope:$platform:$path")
+    fi
 }
 
 add_dir "$CLAUDE_USER_SKILLS" "user" "claude"
