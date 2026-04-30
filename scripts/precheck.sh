@@ -88,7 +88,13 @@ if [[ "$SOURCE" == http* ]]; then
     # https://github.com/user/repo/tree/main/skills/name -> specific path
     if echo "$SOURCE" | grep -qE 'github\.com/[^/]+/[^/]+/tree/[^/]+/'; then
         # Has a path: extract owner/repo/branch/path
-        RAW_URL=$(echo "$SOURCE" | sed -E 's|github\.com/([^/]+)/([^/]+)/tree/([^/]+)/(.*)|raw.githubusercontent.com/\1/\2/\3/\4/SKILL.md|')
+        RAW_URL="https://$(echo "$SOURCE" | sed -E 's|.*github\.com/([^/]+)/([^/]+)/tree/([^/]+)/(.*)|raw.githubusercontent.com/\1/\2/\3/\4/SKILL.md|')"
+        NEW_SKILL_CONTENT=$(curl -sL -f "$RAW_URL" 2>/dev/null || true)
+        # Try Skill.md if SKILL.md not found
+        if [[ -z "$NEW_SKILL_CONTENT" ]]; then
+            RAW_URL="${RAW_URL%SKILL.md}Skill.md"
+            NEW_SKILL_CONTENT=$(curl -sL -f "$RAW_URL" 2>/dev/null || true)
+        fi
     elif echo "$SOURCE" | grep -qE 'github\.com/[^/]+/[^/]+/?$'; then
         # Just repo root - try common locations
         REPO_PATH=$(echo "$SOURCE" | sed -E 's|https?://github\.com/||; s|/$||')
@@ -135,7 +141,10 @@ if [[ "$SOURCE" == http* ]]; then
 
     if [[ -z "$NEW_SKILL_CONTENT" ]]; then
         echo "ERROR: Could not fetch SKILL.md from $SOURCE" >&2
-        echo "Try providing a direct URL to the SKILL.md file or a local path." >&2
+        echo "Try one of:" >&2
+        echo "  - A URL to a specific skill folder: https://github.com/user/repo/tree/main/skills/skill-name" >&2
+        echo "  - A direct URL to the SKILL.md file" >&2
+        echo "  - A local path: ~/path/to/skill-folder" >&2
         exit 1
     fi
 else
