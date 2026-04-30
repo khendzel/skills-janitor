@@ -76,6 +76,55 @@ scan_skills() {
 _token_scan() { scan_skills "$1" "$2"; }
 for_each_skill_dir _token_scan
 
+# Scan plugin skills from the installed plugin cache
+PLUGINS_CACHE="$HOME/.claude/plugins/cache"
+PLUGINS_JSON="$HOME/.claude/plugins/installed_plugins.json"
+if [[ -f "$PLUGINS_JSON" && -d "$PLUGINS_CACHE" ]]; then
+    # Extract source/name/version tuples from installed_plugins.json
+    python3 -c '
+import json, sys
+try:
+    with open(sys.argv[1]) as f:
+        data = json.load(f)
+except (json.JSONDecodeError, ValueError, IOError):
+    sys.exit(0)
+if isinstance(data, dict) and isinstance(data.get("plugins"), dict):
+    seen = set()
+    for key, instances in data["plugins"].items():
+        name = key.rsplit("@", 1)[0] if "@" in key else key
+        source = key.rsplit("@", 1)[1] if "@" in key else ""
+        for inst in (instances if isinstance(instances, list) else []):
+            ver = inst.get("version", "unknown")
+            t = f"{source}\t{name}\t{ver}"
+            if t not in seen:
+                seen.add(t)
+                print(t)
+' "$PLUGINS_JSON" 2>/dev/null | while IFS=$'\t' read -r source plugin_name version; do
+        plugin_skills_dir="$PLUGINS_CACHE/$source/$plugin_name/$version/skills"
+        if [[ -d "$plugin_skills_dir" ]]; then
+            for skill_dir in "$plugin_skills_dir"/*/; do
+                [[ -d "$skill_dir" ]] || continue
+                local_name=$(basename "$skill_dir")
+                [[ "$local_name" == "skills-janitor" ]] && continue
+
+                skill_file=""
+                [[ -f "$skill_dir/SKILL.md" ]] && skill_file="$skill_dir/SKILL.md"
+                [[ -f "$skill_dir/Skill.md" ]] && skill_file="$skill_dir/Skill.md"
+                [[ -z "$skill_file" ]] && continue
+                [[ ! -e "$skill_file" ]] && continue
+
+                word_count=$(wc -w < "$skill_file" | tr -d ' ')
+                desc=$(awk 'NR==1 && /^---$/{started=1; next} started && /^---$/{exit} started && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/"/,""); print}' "$skill_file")
+
+                realpath=$(cd "$skill_dir" 2>/dev/null && pwd -P || echo "$skill_dir")
+                qualified_name="${plugin_name}:${local_name}"
+
+                printf '%s\t%s\t%s\t%s\t%s\n' "plugin" "$qualified_name" "$realpath" "$word_count" "$desc" >> "$TMPFILE"
+            done
+        fi
+    done
+fi
+
 # --- Export for Python ---
 export JSON_OUTPUT BUDGET WEEKS DATA_DIR
 
