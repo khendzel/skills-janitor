@@ -9,10 +9,12 @@ metadata:
 
 Show how many tokens each skill's system prompt consumes and identify unused skills wasting context budget.
 
+The `<scripts_dir>` is the `scripts/` directory next to the `skills/` folder that contains this skill.
+
 ## How to Run
 
 ```bash
-bash ~/.claude/skills/skills-janitor/scripts/tokencost.sh [--budget N] [--weeks N] [--json]
+bash <scripts_dir>/tokencost.sh [--budget N] [--weeks N] [--json]
 ```
 
 ## Options

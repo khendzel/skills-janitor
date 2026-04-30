@@ -9,10 +9,12 @@ metadata:
 
 Run a full inventory scan of all Claude Code skills across every scope.
 
+The `<scripts_dir>` is the `scripts/` directory next to the `skills/` folder that contains this skill.
+
 ## How to Run
 
 ```bash
-bash ~/.claude/skills/skills-janitor/scripts/scan.sh
+bash <scripts_dir>/scan.sh
 ```
 
 ## What It Scans

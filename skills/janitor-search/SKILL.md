@@ -9,14 +9,16 @@ metadata:
 
 Search GitHub for Claude Code skills by keyword, or compare a local skill against alternatives.
 
+The `<scripts_dir>` is the `scripts/` directory next to the `skills/` folder that contains this skill.
+
 ## How to Run
 
 ```bash
 # Search for skills
-bash ~/.claude/skills/skills-janitor/scripts/search.sh <keyword> [--limit N] [--json]
+bash <scripts_dir>/search.sh <keyword> [--limit N] [--json]
 
 # Compare your skill against GitHub alternatives
-bash ~/.claude/skills/skills-janitor/scripts/search.sh --compare <skill-name> [--json]
+bash <scripts_dir>/search.sh --compare <skill-name> [--json]
 ```
 
 ## Search Mode

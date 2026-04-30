@@ -9,14 +9,16 @@ metadata:
 
 Generate a comprehensive health report combining inventory, quality checks, duplicate detection, and broken skill findings.
 
+The `<scripts_dir>` is the `scripts/` directory next to the `skills/` folder that contains this skill.
+
 ## How to Run
 
 Run all analysis scripts and combine results:
 
 ```bash
-bash ~/.claude/skills/skills-janitor/scripts/scan.sh
-bash ~/.claude/skills/skills-janitor/scripts/lint.sh
-bash ~/.claude/skills/skills-janitor/scripts/detect_dupes.sh
+bash <scripts_dir>/scan.sh
+bash <scripts_dir>/lint.sh
+bash <scripts_dir>/detect_dupes.sh
 ```
 
 ## What It Covers

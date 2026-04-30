@@ -9,24 +9,26 @@ metadata:
 
 Check if a new skill would duplicate existing ones before installing it.
 
+## Important: Ask for input first
+
+If the user did not provide a GitHub URL or local path, ASK them before running the script:
+"Which skill do you want to check? Give me a GitHub URL (e.g. `https://github.com/user/repo/tree/main/skills/skill-name`) or a local path."
+
+Do NOT run the script without a source argument.
+
+The `<scripts_dir>` is the `scripts/` directory next to the `skills/` folder that contains this skill.
+
 ## How to Run
 
 ```bash
-bash ~/.claude/skills/skills-janitor/scripts/precheck.sh <github-url-or-path> [--json]
+bash <scripts_dir>/precheck.sh <github-url-or-path> [--json]
 ```
 
-## Examples
+## Accepted input formats
 
-```bash
-# Check a GitHub repo
-precheck.sh https://github.com/user/my-skill
-
-# Check a specific skill folder in a repo
-precheck.sh https://github.com/user/repo/tree/main/skills/my-skill
-
-# Check a local path
-precheck.sh ~/Downloads/some-skill/
-```
+- GitHub skill folder URL: `https://github.com/user/repo/tree/main/skills/skill-name`
+- GitHub repo root (single SKILL.md): `https://github.com/user/my-skill`
+- Local path: `~/path/to/skill/`
 
 ## How It Works
 

@@ -9,13 +9,15 @@ metadata:
 
 Automatically fix common skill issues. Dry-run by default - shows what would change without modifying files.
 
+The `<scripts_dir>` is the `scripts/` directory next to the `skills/` folder that contains this skill.
+
 ## How to Run
 
 ```bash
-bash ~/.claude/skills/skills-janitor/scripts/fix.sh            # preview fixes
-bash ~/.claude/skills/skills-janitor/scripts/fix.sh --apply     # apply fixes
-bash ~/.claude/skills/skills-janitor/scripts/fix.sh --prune     # find broken/orphaned skills
-bash ~/.claude/skills/skills-janitor/scripts/fix.sh --prune --apply  # remove broken skills
+bash <scripts_dir>/fix.sh            # preview fixes
+bash <scripts_dir>/fix.sh --apply     # apply fixes
+bash <scripts_dir>/fix.sh --prune     # find broken/orphaned skills
+bash <scripts_dir>/fix.sh --prune --apply  # remove broken skills
 ```
 
 ## What It Fixes

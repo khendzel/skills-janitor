@@ -9,10 +9,12 @@ metadata:
 
 Parse your Claude Code conversation history to see which skills you actually invoke and which are dead weight.
 
+The `<scripts_dir>` is the `scripts/` directory next to the `skills/` folder that contains this skill.
+
 ## How to Run
 
 ```bash
-bash ~/.claude/skills/skills-janitor/scripts/usage.sh [--weeks N] [--json]
+bash <scripts_dir>/usage.sh [--weeks N] [--json]
 ```
 
 - `--weeks N` - how many weeks to analyze (default: 4)
