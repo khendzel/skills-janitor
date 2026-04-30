@@ -1,5 +1,29 @@
 # Changelog
 
+## v2.0.0 (2026-04-30)
+
+### Fixed (correctness)
+- **`paths.sh` no longer kills scripts under `set -e`.** `[[ -d "$path" ]] && action` in `add_dir()` returned exit 1 when the condition was false and the `&&` was the function's last command. Every script that sources `paths.sh` failed silently on Claude Code-only installs where `~/.agents/skills/` (Codex) does not exist. Same pattern fixed in `fix.sh` (prune codex dirs) and `scan.sh` (skip-self guard).
+- **`usage.sh` finds the history file.** Hardcoded `~/.claude-account-personal/history.jsonl` does not exist on current Claude Code installs. Now checks `~/.claude/history.jsonl` first with legacy fallback; warns gracefully when neither is found.
+- **`precheck.sh` fetches SKILL.md for `/tree/` GitHub URLs.** The `/tree/branch/path` handler built the raw URL but never fetched it. Also adds `https://` prefix and `Skill.md` fallback.
+- **`scan.sh` parses `metadata.version`.** Previously only matched top-level `version:`, missing the nested `metadata:\n  version:` layout used by all skills in this plugin.
+- **Stale cross-references removed.** `janitor-audit` referenced `/janitor-duplicates` and `/janitor-check` (removed in v1.1.0). `janitor-usage` referenced `/janitor-compare` and `/janitor-cleanup` (also removed in v1.1.0).
+- **Trap quoting hardened** in `tokencost.sh` and `precheck.sh` -- single-quoted trap bodies prevent word-splitting on paths with spaces.
+- **Version bumped** for `janitor-usage`, `janitor-search`, and `janitor-precheck` (were stuck at 1.0.0/1.1.0).
+
+### Added
+- **`usage.sh` scans conversation files for dispatched Skill tool_use blocks.** `history.jsonl` only captured user-typed `/slash-commands` but missed programmatic invocations. Now walks `~/.claude/projects/` for `tool_use` blocks with `name=="Skill"`. Adds "Dispatched" column. Plugin skills auto-discovered with scope "plugin".
+- **`tokencost.sh` scans plugin skills from installed plugin cache.** Reads `installed_plugins.json` to discover cache paths and measure all plugin SKILL.md token costs. Handles missing dirs, corrupt JSON, old formats.
+- **`dashboard.sh` -- visual HTML dashboard with snapshot history.** Self-contained HTML template with cards (context window cost, skill activity, health score), charts (weekly invocations, snapshot history), full skill inventory table, plugin list, and quality issues. Each run appends a timestamped snapshot (max 20). Cross-platform open (macOS/Linux/Windows).
+- **Portable `<scripts_dir>` paths in all SKILL.md files.** Replaced hardcoded `~/.claude/skills/skills-janitor/scripts/` with a portable reference that works across plugin cache, marketplace, Codex, and manual clone installs.
+- **`janitor-precheck` asks for input.** SKILL.md now instructs Claude to prompt for a URL or path instead of running without arguments.
+- **Improved descriptions** for `janitor-audit` and `janitor-usage` with trigger clauses ("Use when...").
+
+### Resolved from v1.2.0 known limitations
+- Plugin-namespaced skills are now scanned by `tokencost.sh` (token cost) and discovered by `usage.sh` (dispatched invocations).
+- `usage.sh` natural-language matching supplemented with conversation file scanning -- real usage detection improved from 2 to 131 invocations in testing.
+- `precheck.sh` URL handling fixed for `/tree/` repo layouts.
+
 ## v1.2.0 (2026-04-29)
 
 ### Fixed (correctness)

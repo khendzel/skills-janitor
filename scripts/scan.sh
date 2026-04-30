@@ -73,6 +73,9 @@ scan_skill() {
             name_field=$(echo "$frontmatter" | grep -E '^name:' | sed 's/^name:[[:space:]]*//' | tr -d '"' | head -1 || true)
             description=$(echo "$frontmatter" | grep -E '^description:' | sed 's/^description:[[:space:]]*//' | tr -d '"' | head -1 || true)
             version=$(echo "$frontmatter" | grep -E '^version:' | sed 's/^version:[[:space:]]*//' | tr -d '"' | head -1 || true)
+            if [[ -z "$version" ]]; then
+                version=$(echo "$frontmatter" | grep -E '^[[:space:]]+version:' | sed 's/^[[:space:]]*version:[[:space:]]*//' | tr -d '"' | head -1 || true)
+            fi
         fi
 
         # Check if there's content after frontmatter

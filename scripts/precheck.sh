@@ -46,7 +46,7 @@ fi
 
 # --- Collect installed skill descriptions ---
 export TMPFILE=$(mktemp)
-trap "rm -f $TMPFILE $TMPFILE.new" EXIT
+trap 'rm -f "$TMPFILE" "$TMPFILE.new"' EXIT
 
 extract_skills() {
     local dir="$1"

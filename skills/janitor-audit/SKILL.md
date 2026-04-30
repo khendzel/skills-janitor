@@ -1,8 +1,8 @@
 ---
 name: janitor-audit
-description: "Show all your installed skills"
+description: "Show all your installed skills. Use when the user asks for a skill inventory, skill list, or wants to audit what's installed."
 metadata:
-  version: 1.2.0
+  version: 2.0.0
 ---
 
 # Skill Audit
@@ -48,7 +48,7 @@ Present findings as a summary table:
 
 ## Related Skills
 
-- For duplicate detection: `/janitor-duplicates`
-- For error check: `/janitor-check`
+- For duplicate detection: `/janitor-report`
 - For auto-fixing issues: `/janitor-fix`
 - For a full health report: `/janitor-report`
+- For token cost: `/janitor-tokens`

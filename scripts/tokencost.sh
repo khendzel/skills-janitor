@@ -37,7 +37,7 @@ done
 
 # --- Collect skill data ---
 export TMPFILE=$(mktemp)
-trap "rm -f $TMPFILE" EXIT
+trap 'rm -f "$TMPFILE"' EXIT
 
 scan_skills() {
     local dir="$1"

@@ -1,8 +1,8 @@
 ---
 name: janitor-usage
-description: "Show which skills you use and which you never use"
+description: "Show which skills you use and which you never use. Use when the user asks about skill usage, unused skills, or wants to know which skills are active."
 metadata:
-  version: 1.0.0
+  version: 2.0.0
 ---
 
 # Usage Tracking
@@ -56,5 +56,5 @@ Results are saved to `data/usage-history.json`, keeping the last 12 weeks for tr
 ## Related Skills
 
 - For finding better alternatives: `/janitor-search`
-- For comparing against the market: `/janitor-compare`
-- For removing unused skills: `/janitor-cleanup`
+- For comparing against the market: `/janitor-search --compare`
+- For removing unused skills: `/janitor-fix --prune`

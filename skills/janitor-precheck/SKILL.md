@@ -2,7 +2,7 @@
 name: janitor-precheck
 description: "Check if a new skill overlaps with your existing ones before installing. Use when the user wants to evaluate a skill before adding it, check for duplicates pre-install, or verify a GitHub skill won't conflict."
 metadata:
-  version: 1.1.0
+  version: 2.0.0
 ---
 
 # Pre-Install Overlap Check
