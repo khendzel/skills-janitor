@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skills Janitor Dashboard</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #fff;
+    --text: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --border: #e5e5e7;
+    --accent: #e8453c;
+    --accent-light: #fef0ef;
+    --green: #34c759;
+    --green-light: #edf9f0;
+    --blue: #007aff;
+    --blue-light: #eef4ff;
+    --orange: #ff9500;
+    --orange-light: #fff8ed;
+    --chart-line: #e8453c;
+    --chart-fill: rgba(232,69,60,0.08);
+    --chart-line2: #007aff;
+    --chart-fill2: rgba(0,122,255,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 2rem;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+
+  .header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .header .meta {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+  }
+
+  .card-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-label.red { color: var(--accent); }
+  .card-label.green { color: var(--green); }
+  .card-label.blue { color: var(--blue); }
+  .card-label.orange { color: var(--orange); }
+
+  .big-number {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+
+  .big-number span {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .stat-row {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-item .label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+  }
+
+  .stat-item .value {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .stat-item .value.red { color: var(--accent); }
+  .stat-item .value.green { color: var(--green); }
+
+  .card-wide {
+    grid-column: 1 / -1;
+  }
+
+  .chart-container {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    margin-top: 1rem;
+  }
+
+  .chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+  }
+
+  th {
+    text-align: left;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid var(--border);
+  }
+
+  th.right, td.right { text-align: right; }
+
+  td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  .badge-ok { background: var(--green-light); color: var(--green); }
+  .badge-warn { background: var(--orange-light); color: var(--orange); }
+  .badge-crit { background: var(--accent-light); color: var(--accent); }
+  .badge-info { background: var(--blue-light); color: var(--blue); }
+  .badge-plugin { background: #f3f0ff; color: #7c3aed; }
+
+  .bar-bg {
+    background: var(--border);
+    border-radius: 4px;
+    height: 6px;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+
+  .bar-fill.red { background: var(--accent); }
+  .bar-fill.green { background: var(--green); }
+  .bar-fill.blue { background: var(--blue); }
+
+  .snapshot-nav {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .snapshot-nav select {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+  }
+
+  .snapshot-nav .count {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Skills Janitor</h1>
+  <div class="meta" id="headerMeta"></div>
+</div>
+
+<div class="snapshot-nav" id="snapshotNav" style="display:none">
+  <label>Snapshot:</label>
+  <select id="snapshotSelect" onchange="renderSnapshot(this.value)"></select>
+  <span class="count" id="snapshotCount"></span>
+</div>
+
+<div class="grid" id="topCards"></div>
+
+<div class="grid">
+  <div class="card card-wide" id="trendCard" style="display:none">
+    <div class="card-label blue">Weekly Skill Invocations</div>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:var(--chart-line)"></span>Invocations</span>
+      <span><span class="legend-dot" style="background:var(--chart-line2)"></span>Active Skills</span>
+    </div>
+    <div class="chart-container"><canvas id="trendChart"></canvas></div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card card-wide" id="skillTableCard">
+    <div class="card-label">Skill Inventory</div>
+    <table id="skillTable"></table>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card" id="pluginCard">
+    <div class="card-label blue">Plugins</div>
+    <table id="pluginTable"></table>
+  </div>
+  <div class="card" id="lintCard">
+    <div class="card-label orange">Quality Issues</div>
+    <div id="lintContent"></div>
+  </div>
+</div>
+
+<div class="grid" id="historySection" style="display:none">
+  <div class="card card-wide">
+    <div class="card-label">Snapshot History</div>
+    <div class="legend" style="margin-bottom:0.5rem">
+      <span><span class="legend-dot" style="background:var(--chart-line)"></span>Tokens Wasted</span>
+      <span><span class="legend-dot" style="background:var(--chart-line2)"></span>Active Skills</span>
+    </div>
+    <div class="chart-container"><canvas id="historyChart"></canvas></div>
+  </div>
+</div>
+
+<div class="footer">
+  Made with &#9829; by Buzzwoo E-Com Kitchen | https://www.buzzwoo.de
+</div>
+
+<!-- Snapshot data storage - must be before main script -->
+<script type="application/json" id="snapshotData">[]</script>
+
+<script>
+// --- Snapshot storage (embedded, max 20) ---
+const MAX_SNAPSHOTS = 20;
+
+function getSnapshots() {
+  const el = document.getElementById('snapshotData');
+  if (!el) return [];
+  try { return JSON.parse(el.textContent); } catch(e) { return []; }
+}
+
+function drawChart(canvasId, labels, datasets) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+  const pad = { top: 20, right: 20, bottom: 40, left: 50 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  // Find global max across all datasets
+  let allVals = datasets.flatMap(ds => ds.data);
+  let maxVal = Math.max(...allVals, 1);
+  maxVal = Math.ceil(maxVal / 5) * 5 || 5;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = '#e5e5e7';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + plotH - (plotH * i / 4);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(pad.left + plotW, y);
+    ctx.stroke();
+    ctx.fillStyle = '#6e6e73';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxVal * i / 4), pad.left - 8, y + 3);
+  }
+
+  // X labels
+  ctx.fillStyle = '#6e6e73';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  labels.forEach((label, i) => {
+    const x = pad.left + (plotW * i / (labels.length - 1 || 1));
+    ctx.save();
+    ctx.translate(x, pad.top + plotH + 15);
+    ctx.rotate(-0.4);
+    ctx.fillText(label, 0, 0);
+    ctx.restore();
+  });
+
+  // Draw each dataset
+  datasets.forEach(ds => {
+    const points = ds.data.map((v, i) => ({
+      x: pad.left + (plotW * i / (labels.length - 1 || 1)),
+      y: pad.top + plotH - (plotH * v / maxVal)
+    }));
+
+    // Fill
+    if (ds.fill) {
+      ctx.fillStyle = ds.fill;
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, pad.top + plotH);
+      points.forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.lineTo(points[points.length-1].x, pad.top + plotH);
+      ctx.fill();
+    }
+
+    // Line
+    ctx.strokeStyle = ds.color;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+    ctx.stroke();
+
+    // Dots
+    points.forEach(p => {
+      ctx.fillStyle = ds.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  });
+}
+
+function renderSnapshot(idx) {
+  const snapshots = getSnapshots();
+  const snap = snapshots[idx];
+  if (!snap) return;
+
+  const scan = snap.scan || {};
+  const tokens = snap.tokens || {};
+  const usage = snap.usage || {};
+  const lint = snap.lint || {};
+
+  document.getElementById('headerMeta').textContent =
+    `Snapshot: ${snap.timestamp} | skills-janitor`;
+
+  // --- Top cards ---
+  const totalTokens = tokens.total_tokens || 0;
+  const wastedTokens = tokens.total_unused_tokens || 0;
+  const activeTokens = tokens.total_used_tokens || 0;
+  const budget = tokens.budget || 200000;
+  const skillCount = (scan.skills || []).length;
+  const pluginCount = (scan.plugins || []).length;
+  const activeCount = usage.active_count || 0;
+  const unusedCount = usage.unused_count || 0;
+  const brokenCount = scan.broken_symlinks || 0;
+
+  document.getElementById('topCards').innerHTML = `
+    <div class="card">
+      <div class="card-label red">Context Window Cost</div>
+      <div class="big-number">${totalTokens.toLocaleString()} <span>tokens</span></div>
+      <div style="margin-top:0.5rem;color:var(--text-secondary);font-size:0.85rem">
+        ${(totalTokens/budget*100).toFixed(1)}% of ${(budget/1000).toFixed(0)}k budget
+      </div>
+      <div class="stat-row">
+        <div class="stat-item"><span class="label">Active</span><span class="value green">${activeTokens.toLocaleString()}</span></div>
+        <div class="stat-item"><span class="label">Wasted</span><span class="value red">${wastedTokens.toLocaleString()}</span></div>
+        <div class="stat-item"><span class="label">Budget</span><span class="value">${(budget/1000).toFixed(0)}k</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label green">Skill Activity</div>
+      <div class="big-number">${activeCount} <span>/ ${activeCount + unusedCount} active</span></div>
+      <div style="margin-top:0.75rem">
+        <div class="bar-bg"><div class="bar-fill green" style="width:${activeCount/(activeCount+unusedCount||1)*100}%"></div></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-item"><span class="label">User Skills</span><span class="value">${skillCount}</span></div>
+        <div class="stat-item"><span class="label">Plugins</span><span class="value">${pluginCount}</span></div>
+        <div class="stat-item"><span class="label">Broken</span><span class="value ${brokenCount?'red':''}">${brokenCount}</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label orange">Health Score</div>
+      <div class="big-number">${computeHealthScore(snap)}<span>/100</span></div>
+      <div style="margin-top:0.75rem">
+        <div class="bar-bg"><div class="bar-fill ${computeHealthScore(snap)>=80?'green':computeHealthScore(snap)>=50?'blue':'red'}" style="width:${computeHealthScore(snap)}%"></div></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-item"><span class="label">Critical</span><span class="value ${lint.critical?'red':''}">${lint.critical||0}</span></div>
+        <div class="stat-item"><span class="label">Warnings</span><span class="value">${lint.warnings||0}</span></div>
+        <div class="stat-item"><span class="label">Info</span><span class="value">${lint.info||0}</span></div>
+      </div>
+    </div>
+  `;
+
+  // --- Weekly trend chart ---
+  const weekly = usage.weekly_totals || {};
+  const weekLabels = Object.keys(weekly).sort();
+  if (weekLabels.length > 1) {
+    document.getElementById('trendCard').style.display = '';
+    const weekData = weekLabels.map(w => weekly[w]);
+    // Count unique active skills per week from usage.skills
+    const weekActiveData = weekLabels.map(w => {
+      let count = 0;
+      (usage.skills || []).forEach(s => {
+        const ew = s.explicit_weekly || {};
+        const dw = s.dispatched_weekly || {};
+        const estw = s.estimated_weekly || {};
+        if ((ew[w]||0) + (dw[w]||0) + (estw[w]||0) > 0) count++;
+      });
+      return count;
+    });
+    setTimeout(() => drawChart('trendChart', weekLabels, [
+      { data: weekData, color: 'var(--chart-line)', fill: 'var(--chart-fill)' },
+      { data: weekActiveData, color: 'var(--chart-line2)', fill: 'var(--chart-fill2)' }
+    ]), 50);
+  }
+
+  // --- Skill table ---
+  // Merge three data sources: scan (user skills), usage (dispatched), tokens (cost)
+  const usageMap = {};
+  (usage.skills || []).forEach(s => usageMap[s.name] = s);
+  const tokenMap = {};
+  (tokens.skills || []).forEach(s => tokenMap[s.name] = s);
+  const scanMap = {};
+  (scan.skills || []).forEach(s => scanMap[s.name] = s);
+
+  // Collect all unique skill names across all sources
+  const allNames = new Set();
+  Object.keys(usageMap).forEach(n => allNames.add(n));
+  Object.keys(tokenMap).forEach(n => allNames.add(n));
+  Object.keys(scanMap).forEach(n => allNames.add(n));
+
+  const allSkills = [];
+  allNames.forEach(name => {
+    const u = usageMap[name] || {};
+    const t = tokenMap[name] || {};
+    const s = scanMap[name] || {};
+    const scope = s.scope || t.scope || u.scope || 'plugin';
+    const hasScan = !!scanMap[name];
+    allSkills.push({
+      name: name,
+      scope: scope,
+      tokens: t.tokens || 0,
+      slash: u.explicit || 0,
+      dispatched: u.dispatched || 0,
+      estimated: u.estimated || 0,
+      total: u.total || 0,
+      lastUsed: u.last_used || t.last_used || 'never',
+      status: hasScan ? (s.has_frontmatter ? (s.version ? 'ok' : 'warn') : 'crit') : 'ok',
+      issues: hasScan ? (!s.has_frontmatter ? 'No frontmatter' : !s.version ? 'No version' : '') : ''
+    });
+  });
+
+  allSkills.sort((a, b) => b.total - a.total);
+
+  let tableHTML = `<thead><tr>
+    <th>Skill</th><th>Scope</th><th class="right">Tokens</th>
+    <th class="right">Slash</th><th class="right">Dispatched</th>
+    <th class="right">Total</th><th>Last Used</th><th>Status</th>
+  </tr></thead><tbody>`;
+  allSkills.forEach(s => {
+    const badge = s.status === 'ok' ? '<span class="badge badge-ok">OK</span>' :
+                  s.status === 'warn' ? `<span class="badge badge-warn">${s.issues}</span>` :
+                  `<span class="badge badge-crit">${s.issues}</span>`;
+    const scopeBadge = s.scope === 'plugin' ? '<span class="badge badge-plugin">plugin</span>' :
+                       `<span class="badge badge-info">${s.scope}</span>`;
+    tableHTML += `<tr>
+      <td><strong>${s.name}</strong></td>
+      <td>${scopeBadge}</td>
+      <td class="right">${s.tokens ? s.tokens.toLocaleString() : '-'}</td>
+      <td class="right">${s.slash || '-'}</td>
+      <td class="right">${s.dispatched || '-'}</td>
+      <td class="right"><strong>${s.total}</strong></td>
+      <td>${s.lastUsed}</td>
+      <td>${badge}</td>
+    </tr>`;
+  });
+  tableHTML += '</tbody>';
+  document.getElementById('skillTable').innerHTML = tableHTML;
+
+  // --- Plugin table ---
+  const plugins = scan.plugins || [];
+  let plugHTML = '<thead><tr><th>Plugin</th><th>Source</th><th>Scope</th><th>Version</th></tr></thead><tbody>';
+  plugins.forEach(p => {
+    plugHTML += `<tr><td><strong>${p.name}</strong></td><td>${p.source}</td><td>${p.scope}</td><td>${p.version}</td></tr>`;
+  });
+  plugHTML += '</tbody>';
+  document.getElementById('pluginTable').innerHTML = plugHTML;
+
+  // --- Lint ---
+  const lintIssues = lint.issues || [];
+  if (lintIssues.length === 0) {
+    document.getElementById('lintContent').innerHTML = '<p style="color:var(--green);font-weight:600;margin-top:0.5rem">No critical or warning issues found.</p>';
+  } else {
+    let lintHTML = '<table><thead><tr><th>Severity</th><th>Skill</th><th>Issue</th></tr></thead><tbody>';
+    lintIssues.forEach(i => {
+      const badge = i.severity === 'critical' ? 'badge-crit' : i.severity === 'warning' ? 'badge-warn' : 'badge-info';
+      lintHTML += `<tr><td><span class="badge ${badge}">${i.severity}</span></td><td>${i.skill}</td><td>${i.message}</td></tr>`;
+    });
+    lintHTML += '</tbody></table>';
+    document.getElementById('lintContent').innerHTML = lintHTML;
+  }
+
+  // --- History chart ---
+  if (snapshots.length > 1) {
+    document.getElementById('historySection').style.display = '';
+    const histLabels = snapshots.map(s => s.timestamp.split('T')[0]);
+    const histWasted = snapshots.map(s => (s.tokens || {}).total_unused_tokens || 0);
+    const histActive = snapshots.map(s => (s.usage || {}).active_count || 0);
+    setTimeout(() => drawChart('historyChart', histLabels, [
+      { data: histWasted, color: 'var(--chart-line)', fill: 'var(--chart-fill)' },
+      { data: histActive, color: 'var(--chart-line2)', fill: 'var(--chart-fill2)' }
+    ]), 100);
+  }
+}
+
+function computeHealthScore(snap) {
+  let score = 100;
+  const lint = snap.lint || {};
+  score -= (lint.critical || 0) * 20;
+  score -= (lint.warnings || 0) * 5;
+  score -= (lint.info || 0) * 1;
+  const tokens = snap.tokens || {};
+  if (tokens.waste_pct > 10) score -= 10;
+  else if (tokens.waste_pct > 5) score -= 5;
+  const scan = snap.scan || {};
+  score -= (scan.broken_symlinks || 0) * 15;
+  return Math.max(0, Math.min(100, score));
+}
+
+// --- Init ---
+const snapshots = getSnapshots();
+if (snapshots.length > 1) {
+  const nav = document.getElementById('snapshotNav');
+  nav.style.display = 'flex';
+  const sel = document.getElementById('snapshotSelect');
+  snapshots.forEach((s, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = s.timestamp;
+    sel.appendChild(opt);
+  });
+  sel.value = snapshots.length - 1;
+  document.getElementById('snapshotCount').textContent = `(${snapshots.length} snapshots)`;
+}
+renderSnapshot(snapshots.length - 1);
+</script>
+
+
+
+</body>
+</html>
