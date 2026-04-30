@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # --- Export for Python ---
-export WEEKS JSON_OUTPUT DATA_DIR
+export WEEKS JSON_OUTPUT DATA_DIR HISTORY_FILE
 
 # --- Load platform paths ---
 source "$(dirname "$0")/paths.sh"
@@ -30,12 +30,20 @@ source "$(dirname "$0")/paths.sh"
 # --- Paths ---
 USER_SKILLS="$CLAUDE_USER_SKILLS"
 PROJECT_SKILLS="$CLAUDE_PROJECT_SKILLS"
-HISTORY_FILE="$HOME/.claude-account-personal/history.jsonl"
+HISTORY_FILE=""
+for candidate in \
+    "$HOME/.claude/history.jsonl" \
+    "$HOME/.claude-account-personal/history.jsonl"; do
+    if [[ -f "$candidate" ]]; then
+        HISTORY_FILE="$candidate"
+        break
+    fi
+done
 
-if [[ ! -f "$HISTORY_FILE" ]]; then
-    echo "WARNING: Claude history file not found at $HISTORY_FILE" >&2
+if [[ -z "$HISTORY_FILE" ]]; then
+    echo "WARNING: Claude history file not found" >&2
+    echo "  Searched: ~/.claude/history.jsonl, ~/.claude-account-personal/history.jsonl" >&2
     echo "Usage tracking requires Claude Code conversation history." >&2
-    # Don't exit - still scan skills for inventory
 fi
 
 # --- Ensure data dir exists ---
@@ -87,7 +95,7 @@ from datetime import datetime, timedelta, timezone
 WEEKS = int(os.environ.get("WEEKS", "4"))
 JSON_OUTPUT = os.environ.get("JSON_OUTPUT", "false") == "true"
 SKILLS_FILE = os.environ.get("SKILLS_TMPFILE", "")
-HISTORY_FILE = os.path.expanduser("~/.claude-account-personal/history.jsonl")
+HISTORY_FILE = os.environ.get("HISTORY_FILE", "")
 DATA_DIR = os.environ.get("DATA_DIR", "")
 
 # System commands to filter out (not skill invocations)
@@ -149,68 +157,69 @@ estimated_counts = defaultdict(lambda: defaultdict(int))
 last_used = {}  # skill -> timestamp
 weekly_totals = defaultdict(int)
 
-with open(HISTORY_FILE) as f:
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            entry = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-
-        display = entry.get("display", "").strip()
-        ts = entry.get("timestamp", 0)
-        if not display or not ts:
-            continue
-
-        entry_time = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
-        if entry_time < cutoff:
-            continue
-
-        week_key = entry_time.strftime("%Y-W%W")
-
-        # --- Explicit command detection (Claude / and Codex $.) ---
-        is_slash = display.startswith("/")
-        is_dollar = display.startswith("$.")
-        if is_slash or is_dollar:
-            cmd = display.split()[0].rstrip()
-            if is_slash and cmd in SYSTEM_COMMANDS:
+if HISTORY_FILE and os.path.isfile(HISTORY_FILE):
+    with open(HISTORY_FILE) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
                 continue
 
-            # Match against known skills
-            cmd_name = cmd.lstrip("/").lstrip("$.")
-            for s in skills:
-                if cmd_name == s["name"] or cmd_name.startswith(s["name"] + " "):
-                    explicit_counts[s["name"]][week_key] += 1
-                    last_used[s["name"]] = max(
-                        last_used.get(s["name"], entry_time), entry_time
-                    )
-                    weekly_totals[week_key] += 1
-                    break
-        else:
-            # --- Natural language detection ---
-            input_words = set(re.findall(r'[a-z]+', display.lower()))
-            input_keywords = input_words - STOP_WORDS
-
-            if len(input_keywords) < 3:
+            display = entry.get("display", "").strip()
+            ts = entry.get("timestamp", 0)
+            if not display or not ts:
                 continue
 
-            for s in skills:
-                kw = skill_keywords.get(s["name"], set())
-                if not kw:
+            entry_time = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
+            if entry_time < cutoff:
+                continue
+
+            week_key = entry_time.strftime("%Y-W%W")
+
+            # --- Explicit command detection (Claude / and Codex $.) ---
+            is_slash = display.startswith("/")
+            is_dollar = display.startswith("$.")
+            if is_slash or is_dollar:
+                cmd = display.split()[0].rstrip()
+                if is_slash and cmd in SYSTEM_COMMANDS:
                     continue
 
-                common = input_keywords & kw
-                union = input_keywords | kw
-                similarity = len(common) / len(union) if union else 0
+                # Match against known skills
+                cmd_name = cmd.lstrip("/").lstrip("$.")
+                for s in skills:
+                    if cmd_name == s["name"] or cmd_name.startswith(s["name"] + " "):
+                        explicit_counts[s["name"]][week_key] += 1
+                        last_used[s["name"]] = max(
+                            last_used.get(s["name"], entry_time), entry_time
+                        )
+                        weekly_totals[week_key] += 1
+                        break
+            else:
+                # --- Natural language detection ---
+                input_words = set(re.findall(r'[a-z]+', display.lower()))
+                input_keywords = input_words - STOP_WORDS
 
-                # Higher threshold (50%) to avoid false positives
-                if similarity > 0.5 and len(common) >= 3:
-                    estimated_counts[s["name"]][week_key] += 1
-                    if s["name"] not in last_used or entry_time > last_used[s["name"]]:
-                        last_used[s["name"]] = entry_time
-                    weekly_totals[week_key] += 1
+                if len(input_keywords) < 3:
+                    continue
+
+                for s in skills:
+                    kw = skill_keywords.get(s["name"], set())
+                    if not kw:
+                        continue
+
+                    common = input_keywords & kw
+                    union = input_keywords | kw
+                    similarity = len(common) / len(union) if union else 0
+
+                    # Higher threshold (50%) to avoid false positives
+                    if similarity > 0.5 and len(common) >= 3:
+                        estimated_counts[s["name"]][week_key] += 1
+                        if s["name"] not in last_used or entry_time > last_used[s["name"]]:
+                            last_used[s["name"]] = entry_time
+                        weekly_totals[week_key] += 1
 
 # --- Build results ---
 all_skill_names = [s["name"] for s in skills]
