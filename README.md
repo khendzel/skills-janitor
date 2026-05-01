@@ -125,6 +125,43 @@ Check if a new skill overlaps with existing ones before installing:
   VERDICT: High overlap detected - likely duplicate
 ```
 
+## Duplicate detection (new in v1.2)
+
+`/janitor-report` now flags two distinct kinds of duplicates separately:
+
+```
+=== Skills Janitor - Duplicate Detection ===
+
+Total skill records: 73
+Unique skill files (after symlink dedup): 60
+
+--- Name Collisions ---
+Found 2 skill name(s) at multiple distinct paths:
+
+  baseline-ui
+    [user] ~/.claude-account-personal/skills/baseline-ui
+    [user] ~/.agents/skills/baseline-ui
+
+  fixing-accessibility
+    [user] ~/.claude-account-personal/skills/fixing-accessibility
+    [user] ~/.agents/skills/fixing-accessibility
+
+--- Description Overlap (Jaccard > 30%) ---
+Found 3 potential overlap(s):
+
+  [50%] janitor-audit <-> janitor-usage
+       Scopes: user / user
+       Shared keywords: show, skills
+
+  [33%] n8n-code-javascript <-> n8n-code-python
+       Scopes: user / user
+       Shared keywords: code, input, json, node, nodes, syntax
+```
+
+**Name collisions** are exact-name conflicts at different real paths — the situation that makes Claude pick the wrong skill ambiguously. **Description overlaps** are semantic-similarity warnings for skills with overlapping triggers but different names.
+
+Symlink shadows (the same physical SKILL.md reachable from both `~/.claude/skills/` and `~/.agents/skills/`) are deduped via `realpath` and no longer counted as duplicates.
+
 ## What it won't do
 
 - Never deletes anything without explicit confirmation
