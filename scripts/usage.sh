@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # --- Export for Python ---
-export WEEKS JSON_OUTPUT DATA_DIR
+export WEEKS JSON_OUTPUT DATA_DIR HISTORY_FILE
 
 # --- Load platform paths ---
 source "$(dirname "$0")/paths.sh"
@@ -30,13 +30,35 @@ source "$(dirname "$0")/paths.sh"
 # --- Paths ---
 USER_SKILLS="$CLAUDE_USER_SKILLS"
 PROJECT_SKILLS="$CLAUDE_PROJECT_SKILLS"
-HISTORY_FILE="$HOME/.claude-account-personal/history.jsonl"
+HISTORY_FILE=""
+for candidate in \
+    "$HOME/.claude/history.jsonl" \
+    "$HOME/.claude-account-personal/history.jsonl"; do
+    if [[ -f "$candidate" ]]; then
+        HISTORY_FILE="$candidate"
+        break
+    fi
+done
 
-if [[ ! -f "$HISTORY_FILE" ]]; then
-    echo "WARNING: Claude history file not found at $HISTORY_FILE" >&2
+if [[ -z "$HISTORY_FILE" ]]; then
+    echo "WARNING: Claude history file not found" >&2
+    echo "  Searched: ~/.claude/history.jsonl, ~/.claude-account-personal/history.jsonl" >&2
     echo "Usage tracking requires Claude Code conversation history." >&2
-    # Don't exit - still scan skills for inventory
 fi
+
+# --- Discover conversation directories (per-project jsonl files) ---
+# Claude Code stores tool_use blocks (including Skill calls) in these files.
+# Each platform may store conversations differently; we collect dirs here and
+# let Python handle the parsing so the logic stays portable across OS/platform.
+CONVERSATION_DIRS=""
+for cdir in \
+    "$HOME/.claude/projects" \
+    "$HOME/.claude-account-personal/projects"; do
+    if [[ -d "$cdir" ]]; then
+        CONVERSATION_DIRS="${CONVERSATION_DIRS:+$CONVERSATION_DIRS:}$cdir"
+    fi
+done
+export CONVERSATION_DIRS
 
 # --- Ensure data dir exists ---
 mkdir -p "$DATA_DIR"
@@ -87,8 +109,12 @@ from datetime import datetime, timedelta, timezone
 WEEKS = int(os.environ.get("WEEKS", "4"))
 JSON_OUTPUT = os.environ.get("JSON_OUTPUT", "false") == "true"
 SKILLS_FILE = os.environ.get("SKILLS_TMPFILE", "")
-HISTORY_FILE = os.path.expanduser("~/.claude-account-personal/history.jsonl")
+HISTORY_FILE = os.environ.get("HISTORY_FILE", "")
 DATA_DIR = os.environ.get("DATA_DIR", "")
+CONVERSATION_DIRS = [
+    d for d in os.environ.get("CONVERSATION_DIRS", "").split(":")
+    if d and os.path.isdir(d)
+]
 
 # System commands to filter out (not skill invocations)
 SYSTEM_COMMANDS = {
@@ -146,80 +172,164 @@ cutoff = now - timedelta(weeks=WEEKS)
 # Tracking structures
 explicit_counts = defaultdict(lambda: defaultdict(int))  # skill -> week -> count
 estimated_counts = defaultdict(lambda: defaultdict(int))
+dispatched_counts = defaultdict(lambda: defaultdict(int))  # from conversation tool_use
 last_used = {}  # skill -> timestamp
 weekly_totals = defaultdict(int)
 
-with open(HISTORY_FILE) as f:
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            entry = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-
-        display = entry.get("display", "").strip()
-        ts = entry.get("timestamp", 0)
-        if not display or not ts:
-            continue
-
-        entry_time = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
-        if entry_time < cutoff:
-            continue
-
-        week_key = entry_time.strftime("%Y-W%W")
-
-        # --- Explicit command detection (Claude / and Codex $.) ---
-        is_slash = display.startswith("/")
-        is_dollar = display.startswith("$.")
-        if is_slash or is_dollar:
-            cmd = display.split()[0].rstrip()
-            if is_slash and cmd in SYSTEM_COMMANDS:
+if HISTORY_FILE and os.path.isfile(HISTORY_FILE):
+    with open(HISTORY_FILE) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
                 continue
 
-            # Match against known skills
-            cmd_name = cmd.lstrip("/").lstrip("$.")
-            for s in skills:
-                if cmd_name == s["name"] or cmd_name.startswith(s["name"] + " "):
-                    explicit_counts[s["name"]][week_key] += 1
-                    last_used[s["name"]] = max(
-                        last_used.get(s["name"], entry_time), entry_time
-                    )
-                    weekly_totals[week_key] += 1
-                    break
-        else:
-            # --- Natural language detection ---
-            input_words = set(re.findall(r'[a-z]+', display.lower()))
-            input_keywords = input_words - STOP_WORDS
-
-            if len(input_keywords) < 3:
+            display = entry.get("display", "").strip()
+            ts = entry.get("timestamp", 0)
+            if not display or not ts:
                 continue
 
-            for s in skills:
-                kw = skill_keywords.get(s["name"], set())
-                if not kw:
+            entry_time = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
+            if entry_time < cutoff:
+                continue
+
+            week_key = entry_time.strftime("%Y-W%W")
+
+            # --- Explicit command detection (Claude / and Codex $.) ---
+            is_slash = display.startswith("/")
+            is_dollar = display.startswith("$.")
+            if is_slash or is_dollar:
+                cmd = display.split()[0].rstrip()
+                if is_slash and cmd in SYSTEM_COMMANDS:
                     continue
 
-                common = input_keywords & kw
-                union = input_keywords | kw
-                similarity = len(common) / len(union) if union else 0
+                # Match against known skills
+                cmd_name = cmd.lstrip("/").lstrip("$.")
+                for s in skills:
+                    if cmd_name == s["name"] or cmd_name.startswith(s["name"] + " "):
+                        explicit_counts[s["name"]][week_key] += 1
+                        last_used[s["name"]] = max(
+                            last_used.get(s["name"], entry_time), entry_time
+                        )
+                        weekly_totals[week_key] += 1
+                        break
+            else:
+                # --- Natural language detection ---
+                input_words = set(re.findall(r'[a-z]+', display.lower()))
+                input_keywords = input_words - STOP_WORDS
 
-                # Higher threshold (50%) to avoid false positives
-                if similarity > 0.5 and len(common) >= 3:
-                    estimated_counts[s["name"]][week_key] += 1
-                    if s["name"] not in last_used or entry_time > last_used[s["name"]]:
-                        last_used[s["name"]] = entry_time
-                    weekly_totals[week_key] += 1
+                if len(input_keywords) < 3:
+                    continue
+
+                for s in skills:
+                    kw = skill_keywords.get(s["name"], set())
+                    if not kw:
+                        continue
+
+                    common = input_keywords & kw
+                    union = input_keywords | kw
+                    similarity = len(common) / len(union) if union else 0
+
+                    # Higher threshold (50%) to avoid false positives
+                    if similarity > 0.5 and len(common) >= 3:
+                        estimated_counts[s["name"]][week_key] += 1
+                        if s["name"] not in last_used or entry_time > last_used[s["name"]]:
+                            last_used[s["name"]] = entry_time
+                        weekly_totals[week_key] += 1
+
+# --- Scan conversation files for dispatched Skill tool_use blocks ---
+# Claude Code stores per-conversation jsonl under ~/.claude/projects/.
+# Each assistant message may contain tool_use blocks; we look for name=="Skill".
+# We skip subagent files to avoid double-counting.
+for conv_dir in CONVERSATION_DIRS:
+    for dirpath, dirnames, filenames in os.walk(conv_dir):
+        # Skip subagent conversation files
+        if "subagents" in dirpath.split(os.sep):
+            continue
+        for fname in filenames:
+            if not fname.endswith(".jsonl"):
+                continue
+            fpath = os.path.join(dirpath, fname)
+            try:
+                with open(fpath) as cf:
+                    for cline in cf:
+                        cline = cline.strip()
+                        if not cline:
+                            continue
+                        try:
+                            entry = json.loads(cline)
+                        except (json.JSONDecodeError, ValueError):
+                            continue
+                        if entry.get("type") != "assistant":
+                            continue
+                        msg = entry.get("message", {})
+                        if not isinstance(msg, dict):
+                            continue
+                        content = msg.get("content", [])
+                        if not isinstance(content, list):
+                            continue
+                        # Extract timestamp from the message if available
+                        ts_str = msg.get("timestamp", "")
+                        entry_time = None
+                        if ts_str:
+                            try:
+                                entry_time = datetime.fromisoformat(
+                                    ts_str.replace("Z", "+00:00")
+                                )
+                            except (ValueError, TypeError):
+                                pass
+                        # Fall back to file mtime for timestamp
+                        if entry_time is None:
+                            try:
+                                mtime = os.path.getmtime(fpath)
+                                entry_time = datetime.fromtimestamp(
+                                    mtime, tz=timezone.utc
+                                )
+                            except OSError:
+                                continue
+                        if entry_time < cutoff:
+                            continue
+                        week_key = entry_time.strftime("%Y-W%W")
+                        for block in content:
+                            if not isinstance(block, dict):
+                                continue
+                            if block.get("type") != "tool_use":
+                                continue
+                            if block.get("name") != "Skill":
+                                continue
+                            skill_name = block.get("input", {}).get(
+                                "skill", ""
+                            )
+                            if not skill_name:
+                                continue
+                            dispatched_counts[skill_name][week_key] += 1
+                            if (
+                                skill_name not in last_used
+                                or entry_time > last_used[skill_name]
+                            ):
+                                last_used[skill_name] = entry_time
+                            weekly_totals[week_key] += 1
+            except (IOError, OSError):
+                continue
 
 # --- Build results ---
+# Include dispatched skills not in local inventory (e.g. plugin-provided skills)
+known_names = {s["name"] for s in skills}
+for dname in dispatched_counts:
+    if dname not in known_names:
+        skills.append({"scope": "plugin", "name": dname, "desc": ""})
+
 all_skill_names = [s["name"] for s in skills]
 results = []
 for s in skills:
     name = s["name"]
     exp_total = sum(explicit_counts[name].values())
     est_total = sum(estimated_counts[name].values())
-    total = exp_total + est_total
+    dis_total = sum(dispatched_counts[name].values())
+    total = exp_total + est_total + dis_total
     lu = last_used.get(name)
     lu_str = lu.strftime("%Y-%m-%d") if lu else "never"
     weeks_since = int((now - lu).days / 7) if lu else -1
@@ -229,11 +339,13 @@ for s in skills:
         "scope": s["scope"],
         "explicit": exp_total,
         "estimated": est_total,
+        "dispatched": dis_total,
         "total": total,
         "last_used": lu_str,
         "weeks_since_use": weeks_since,
         "explicit_weekly": dict(explicit_counts[name]),
         "estimated_weekly": dict(estimated_counts[name]),
+        "dispatched_weekly": dict(dispatched_counts[name]),
     })
 
 # Sort: most used first, then alphabetical
@@ -272,6 +384,7 @@ if DATA_DIR:
         "skills": {r["name"]: {
             "explicit": r["explicit"],
             "estimated": r["estimated"],
+            "dispatched": r["dispatched"],
             "total": r["total"],
             "last_used": r["last_used"],
         } for r in results}
@@ -304,9 +417,9 @@ else:
 
     if active_skills:
         print("--- Most Used ---")
-        print(f"  {'Skill':<35} {'Explicit':>8} {'Estimated':>9} {'Total':>5}  {'Last Used':<10}")
+        print(f"  {'Skill':<40} {'Slash':>5} {'Dispatched':>10} {'Est.':>5} {'Total':>5}  {'Last Used':<10}")
         for r in active_skills:
-            print(f"  {r['name']:<35} {r['explicit']:>8} {r['estimated']:>9} {r['total']:>5}  {r['last_used']:<10}")
+            print(f"  {r['name']:<40} {r['explicit']:>5} {r['dispatched']:>10} {r['estimated']:>5} {r['total']:>5}  {r['last_used']:<10}")
         print()
 
     if unused_skills:

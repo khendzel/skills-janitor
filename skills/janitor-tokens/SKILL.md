@@ -2,17 +2,19 @@
 name: janitor-tokens
 description: "Show how many context window tokens each skill consumes. Use when the user asks about token cost, context budget, skill size, or wants to know which skills waste the most context space."
 metadata:
-  version: 1.2.0
+  version: 2.0.0
 ---
 
 # Context Window Token Cost
 
 Show how many tokens each skill's system prompt consumes and identify unused skills wasting context budget.
 
+The `<scripts_dir>` is the `scripts/` directory next to the `skills/` folder that contains this skill.
+
 ## How to Run
 
 ```bash
-bash ~/.claude/skills/skills-janitor/scripts/tokencost.sh [--budget N] [--weeks N] [--json]
+bash <scripts_dir>/tokencost.sh [--budget N] [--weeks N] [--json]
 ```
 
 ## Options

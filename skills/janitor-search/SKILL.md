@@ -2,21 +2,23 @@
 name: janitor-search
 description: "Search GitHub for new skills to install. Also use with --compare to analyze a local skill against GitHub alternatives and marketplace competition."
 metadata:
-  version: 1.1.0
+  version: 2.0.0
 ---
 
 # Skill Discovery & Comparison
 
 Search GitHub for Claude Code skills by keyword, or compare a local skill against alternatives.
 
+The `<scripts_dir>` is the `scripts/` directory next to the `skills/` folder that contains this skill.
+
 ## How to Run
 
 ```bash
 # Search for skills
-bash ~/.claude/skills/skills-janitor/scripts/search.sh <keyword> [--limit N] [--json]
+bash <scripts_dir>/search.sh <keyword> [--limit N] [--json]
 
 # Compare your skill against GitHub alternatives
-bash ~/.claude/skills/skills-janitor/scripts/search.sh --compare <skill-name> [--json]
+bash <scripts_dir>/search.sh --compare <skill-name> [--json]
 ```
 
 ## Search Mode

@@ -1,18 +1,20 @@
 ---
 name: janitor-audit
-description: "Show all your installed skills"
+description: "Show all your installed skills. Use when the user asks for a skill inventory, skill list, or wants to audit what's installed."
 metadata:
-  version: 1.2.0
+  version: 2.0.0
 ---
 
 # Skill Audit
 
 Run a full inventory scan of all Claude Code skills across every scope.
 
+The `<scripts_dir>` is the `scripts/` directory next to the `skills/` folder that contains this skill.
+
 ## How to Run
 
 ```bash
-bash ~/.claude/skills/skills-janitor/scripts/scan.sh
+bash <scripts_dir>/scan.sh
 ```
 
 ## What It Scans
@@ -46,7 +48,7 @@ Present findings as a summary table:
 
 ## Related Skills
 
-- For duplicate detection: `/janitor-duplicates`
-- For error check: `/janitor-check`
+- For duplicate detection: `/janitor-report`
 - For auto-fixing issues: `/janitor-fix`
 - For a full health report: `/janitor-report`
+- For token cost: `/janitor-tokens`
