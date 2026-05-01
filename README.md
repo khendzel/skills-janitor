@@ -8,12 +8,24 @@ Works with **Claude Code** and **OpenAI Codex**.
 
 A plugin that keeps your skills ecosystem clean, organized, and healthy. Automatically detects and scans skills from both Claude Code (`~/.claude/skills/`) and OpenAI Codex (`~/.agents/skills/`).
 
-## What's New in v1.1
+## What's New in v1.2
 
-- **Cross-platform** - works with both Claude Code and OpenAI Codex
-- **Pre-install overlap check** - check if a new skill duplicates existing ones before installing
-- **Context window token cost** - see how many tokens each skill consumes and find unused waste
-- **Consolidated from 9 to 7 commands** - fewer commands, same coverage
+Correctness release — bundled five fixes that resolve real data-loss and noise problems found in the wild.
+
+- **`fix.sh --apply` is safe again** — recognizes nested `metadata.version` (the canonical layout). Previously would have injected duplicate top-level `version:` lines into every modern skill.
+- **Name-collision detection** — `janitor-report` now flags skills with the same name living at different real paths (the situation that confuses skill triggering), not just description-similarity overlaps.
+- **Symlink shadows no longer reported as duplicates** — the same physical SKILL.md reachable from `~/.claude/skills/` and `~/.agents/skills/` is counted once.
+- **`tokencost` reflects actual cost** — no more double-counted symlinks inflating the wasted-budget number.
+- **Plugin info populated** — `installed_plugins.json` parser updated for Claude Code v2 schema (was always reporting 0 plugins).
+
+Plus prior unreleased lint fixes (Windows compatibility, multiline descriptions, support-folder false-positives).
+
+### What's still in v1.1
+
+- **Cross-platform** — works with both Claude Code and OpenAI Codex
+- **Pre-install overlap check** — `/janitor-precheck` checks if a new skill duplicates existing ones before installing
+- **Context window token cost** — `/janitor-tokens` shows per-skill token consumption
+- **Consolidated from 9 to 7 commands** — fewer commands, same coverage
 
 ## Skills
 
