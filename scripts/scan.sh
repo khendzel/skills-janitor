@@ -30,11 +30,20 @@ FIRST_SKILL=true
 scan_skill() {
     local path="$1"
     local scope="$2"
+    local namespace="${3:-}"
     local skill_name
     skill_name=$(basename "$path")
 
     # Skip self (plugin data dir, not a real skill)
     [[ "$skill_name" == "skills-janitor" ]] && return
+
+    # Qualified name: <namespace>:<folder> for plugin/source skills,
+    # plain folder name otherwise. Matches how Claude Code displays
+    # plugin-namespaced skills in the user's skill list.
+    local qualified_name="$skill_name"
+    if [[ -n "$namespace" ]]; then
+        qualified_name="${namespace}:${skill_name}"
+    fi
 
     local skill_file=""
     if [[ -f "$path/SKILL.md" ]]; then
@@ -94,12 +103,18 @@ scan_skill() {
     fi
 
     # Escape values for safe JSON output
-    local json_folder json_symlink json_name json_desc json_version
+    local json_folder json_symlink json_name json_desc json_version json_qualified json_namespace
     json_folder=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$skill_name" 2>/dev/null || echo '""')
     json_symlink=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$symlink_target" 2>/dev/null || echo '""')
     json_name=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$name_field" 2>/dev/null || echo '""')
     json_desc=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$description" 2>/dev/null || echo '""')
     json_version=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$version" 2>/dev/null || echo '""')
+    json_qualified=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$qualified_name" 2>/dev/null || echo '""')
+    if [[ -n "$namespace" ]]; then
+        json_namespace=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$namespace" 2>/dev/null || echo 'null')
+    else
+        json_namespace="null"
+    fi
 
     # Emit comma separator only after the first object — comma must follow a real
     # object, not an early-returned skip, otherwise the JSON ends up with double commas.
@@ -114,6 +129,8 @@ scan_skill() {
   {
     "folder": $json_folder,
     "scope": "$scope",
+    "namespace": $json_namespace,
+    "qualified_name": $json_qualified,
     "path": "$path",
     "is_symlink": $is_symlink,
     "symlink_target": $json_symlink,
@@ -133,41 +150,21 @@ echo "{"
 echo '  "scan_date": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",'
 echo '  "skills": ['
 
-# Scan user-level skills
-if [[ -d "$USER_SKILLS" ]]; then
-    for skill_dir in "$USER_SKILLS"/*/; do
-        [[ -d "$skill_dir" ]] || continue
-        scan_skill "${skill_dir%/}" "user"
-    done
-fi
-
-# Scan project-level skills
-if [[ -d "$PROJECT_SKILLS" ]]; then
-    for skill_dir in "$PROJECT_SKILLS"/*/; do
-        [[ -d "$skill_dir" ]] || continue
-        scan_skill "${skill_dir%/}" "project"
-    done
-fi
-
-# Scan Codex user-level skills
-if [[ -d "$CODEX_USER" ]]; then
-    for skill_dir in "$CODEX_USER"/*/; do
-        [[ -d "$skill_dir" ]] || continue
-        scan_skill "${skill_dir%/}" "codex-user"
-    done
-fi
-
-# Scan Codex project-level skills
-if [[ -d "$CODEX_PROJECT" ]]; then
-    CODEX_P_REAL=$(cd "$CODEX_PROJECT" 2>/dev/null && pwd -P || echo "")
-    CODEX_U_REAL=$(cd "$CODEX_USER" 2>/dev/null && pwd -P || echo "")
-    if [[ "$CODEX_P_REAL" != "$CODEX_U_REAL" ]]; then
-        for skill_dir in "$CODEX_PROJECT"/*/; do
-            [[ -d "$skill_dir" ]] || continue
-            scan_skill "${skill_dir%/}" "codex-project"
-        done
+# Walk every registered skill directory (user/project/codex/plugin/source).
+# Path/scope/platform/namespace come from ALL_SKILL_DIRS in paths.sh, which
+# handles the realpath dedup and installed_plugins.json parsing.
+_scan_iter() {
+    local parent_dir="$1" scope="$2" _platform="$3" namespace="${4:-}"
+    # Codex scope uses a "codex-user"/"codex-project" label rather than "user"
+    if [[ "$_platform" == "codex" ]]; then
+        scope="codex-${scope}"
     fi
-fi
+    for skill_dir in "$parent_dir"/*/; do
+        [[ -d "$skill_dir" ]] || continue
+        scan_skill "${skill_dir%/}" "$scope" "$namespace"
+    done
+}
+for_each_skill_dir _scan_iter
 
 echo ""
 echo "  ],"
