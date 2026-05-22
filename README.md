@@ -1,43 +1,44 @@
 # Skills Janitor
 
-> Audit, track usage, and manage your AI coding skills - 7 focused skills, zero dependencies.
+> Audit, track usage, and manage your AI coding skills — 4 focused commands, zero dependencies.
 
 Works with **Claude Code** and **OpenAI Codex**.
 
 ![Skills Janitor](demo.gif)
 
-A plugin that keeps your skills ecosystem clean, organized, and healthy. Automatically detects and scans skills from both Claude Code (`~/.claude/skills/`) and OpenAI Codex (`~/.agents/skills/`).
+A plugin that keeps your skills ecosystem clean, organized, and healthy. Scans every place skills live — user, project, codex, and (as of v1.3) plugin-namespaced skills from `/plugin install`.
 
-## What's New in v1.2
+## What's New in v1.3
 
-Correctness release — bundled five fixes that resolve real data-loss and noise problems found in the wild.
+**Plugin skills are now visible.** Janitor finally sees every skill installed via `/plugin install` — marketplace, cache (active version only), and source-loaded. On a typical machine with `marketing-skills`, `figma`, `vercel`, `interface-design`, `impeccable` and similar plugins installed, the scanned skill count more than doubles. The duplicate detector also surfaces cross-scope collisions like `marketing-seo-audit` (user) ↔ `marketing-skills:seo-audit` (plugin) — the situation that was completely invisible in v1.2.
 
-- **`fix.sh --apply` is safe again** — recognizes nested `metadata.version` (the canonical layout). Previously would have injected duplicate top-level `version:` lines into every modern skill.
-- **Name-collision detection** — `janitor-report` now flags skills with the same name living at different real paths (the situation that confuses skill triggering), not just description-similarity overlaps.
-- **Symlink shadows no longer reported as duplicates** — the same physical SKILL.md reachable from `~/.claude/skills/` and `~/.agents/skills/` is counted once.
-- **`tokencost` reflects actual cost** — no more double-counted symlinks inflating the wasted-budget number.
-- **Plugin info populated** — `installed_plugins.json` parser updated for Claude Code v2 schema (was always reporting 0 plugins).
+**Commands consolidated 7 → 4.** Fewer entry points, same coverage:
 
-Plus prior unreleased lint fixes (Windows compatibility, multiline descriptions, support-folder false-positives).
+| Now (v1.3) | Replaces |
+|---|---|
+| `/janitor-report` (`--brief` for inventory) | `/janitor-audit` + `/janitor-report` |
+| `/janitor-value` | `/janitor-usage` + `/janitor-tokens` |
+| `/janitor-discover` | `/janitor-search` + `/janitor-precheck` |
+| `/janitor-fix` | unchanged |
 
-### What's still in v1.1
+The four removed commands keep working as deprecated aliases for one release; they'll be removed in v1.4.
 
-- **Cross-platform** — works with both Claude Code and OpenAI Codex
-- **Pre-install overlap check** — `/janitor-precheck` checks if a new skill duplicates existing ones before installing
-- **Context window token cost** — `/janitor-tokens` shows per-skill token consumption
-- **Consolidated from 9 to 7 commands** — fewer commands, same coverage
+### What's still in v1.2 / v1.1
+
+- Cross-platform (Claude Code + OpenAI Codex)
+- Symlink-shadow dedup
+- Name-collision detection in `/janitor-report`
+- `installed_plugins.json` v2 schema parsing
+- `--prune` flag on `/janitor-fix` for broken symlinks and empty dirs
 
 ## Skills
 
 | Command | What it does |
 |---------|-------------|
-| `/janitor-audit` | Full inventory of all installed skills |
-| `/janitor-report` | Health check: lint, duplicates, broken skills, recommendations |
+| `/janitor-report` | Full health check: inventory + lint + duplicates + broken skills. `--brief` for inventory only. |
 | `/janitor-fix` | Auto-fix issues + `--prune` to remove broken skills |
-| `/janitor-usage` | Track which skills you use and which you never use |
-| `/janitor-tokens` | Show context window token cost per skill |
-| `/janitor-search` | Search GitHub for skills + `--compare` for market analysis |
-| `/janitor-precheck` | Check overlap before installing a new skill |
+| `/janitor-value` | Combined token cost + usage — "is each skill earning its context budget?" |
+| `/janitor-discover` | Search GitHub for new skills, or check a URL/path before installing |
 
 ## Install
 
@@ -57,24 +58,22 @@ git clone https://github.com/khendzel/skills-janitor ~/.claude/skills/skills-jan
 Each skill has its own slash command with autocomplete:
 
 ```
-/janitor-audit          -> full skill inventory
-/janitor-report         -> health check (lint + duplicates + broken)
-/janitor-usage          -> which skills you actually invoke
-/janitor-tokens         -> context window cost per skill
-/janitor-search         -> find skills on GitHub
-/janitor-search --compare my-skill  -> market analysis vs alternatives
-/janitor-precheck https://github.com/user/skill  -> check before installing
-/janitor-fix            -> auto-fix (dry-run by default)
-/janitor-fix --prune    -> find and remove broken skills
+/janitor-report                        -> full health check (lint + duplicates + broken)
+/janitor-report --brief                -> inventory only
+/janitor-value                         -> tokens + usage, sorted by waste
+/janitor-discover seo                  -> search GitHub for SEO skills
+/janitor-discover --compare my-skill   -> market analysis vs alternatives
+/janitor-discover user/skill           -> check before installing
+/janitor-fix                           -> auto-fix (dry-run by default)
+/janitor-fix --prune                   -> find and remove broken skills
 ```
 
 Or use natural language:
 ```
-"audit my skills"
-"which skills do I use?"
-"how many tokens do my skills cost?"
-"check this skill before installing"
-"search for n8n skills"
+"check my skills"
+"which skills are wasting context?"
+"find me a skill for n8n workflows"
+"check this skill before I install it"
 ```
 
 ## Usage tracking
@@ -188,31 +187,34 @@ Skills Janitor auto-detects which platforms are installed and scans all of them.
 ```
 skills-janitor/
 ├── .claude-plugin/
-│   └── marketplace.json      # Plugin manifest (7 skills)
+│   └── marketplace.json
 ├── skills/
-│   ├── janitor-audit/SKILL.md
-│   ├── janitor-report/SKILL.md
-│   ├── janitor-fix/SKILL.md
-│   ├── janitor-usage/SKILL.md
-│   ├── janitor-tokens/SKILL.md
-│   ├── janitor-search/SKILL.md
-│   └── janitor-precheck/SKILL.md
-├── scripts/                  # Shared bash+python scripts
+│   ├── janitor-report/SKILL.md       # full health check
+│   ├── janitor-fix/SKILL.md          # auto-fix
+│   ├── janitor-value/SKILL.md        # tokens + usage
+│   ├── janitor-discover/SKILL.md     # search + precheck
+│   └── (deprecated aliases for one release: audit, usage, tokens, search, precheck)
+├── scripts/                          # bash+python, no other deps
 ├── demo.gif
-├── LICENSE                   # MIT
+├── LICENSE                           # MIT
 └── README.md
 ```
 
-## Migrating from v1.0
-
-If you used v1.0 (9 skills), here's what changed:
+## Migrating
 
 | Old command | New equivalent |
 |-------------|---------------|
-| `/janitor-check` | `/janitor-report` (includes lint checks) |
-| `/janitor-duplicates` | `/janitor-report` (includes duplicate detection) |
-| `/janitor-cleanup` | `/janitor-fix --prune` |
-| `/janitor-compare` | `/janitor-search --compare <name>` |
+| `/janitor-check` (v1.0) | `/janitor-report` |
+| `/janitor-duplicates` (v1.0) | `/janitor-report` |
+| `/janitor-cleanup` (v1.0) | `/janitor-fix --prune` |
+| `/janitor-compare` (v1.0) | `/janitor-discover --compare <name>` |
+| `/janitor-audit` (v1.2) | `/janitor-report --brief` |
+| `/janitor-usage` (v1.2) | `/janitor-value` |
+| `/janitor-tokens` (v1.2) | `/janitor-value` |
+| `/janitor-search` (v1.2) | `/janitor-discover` |
+| `/janitor-precheck` (v1.2) | `/janitor-discover <url>` |
+
+All v1.2 commands keep working as deprecated aliases until v1.4.
 
 ## Contributing
 

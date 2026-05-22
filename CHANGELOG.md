@@ -1,5 +1,45 @@
 # Changelog
 
+## v1.3.0 (2026-05-22)
+
+### Plugin skills are now visible
+
+The single biggest correctness fix in this project's history. Through v1.2, Janitor could only see skills under `~/.claude/skills/` (and the Codex equivalent) — plugin-namespaced skills installed via `/plugin install` (e.g. `marketing-skills:image`, `figma:figma-use`, `vercel:nextjs`) were completely invisible to every command.
+
+v1.3 walks the active install path of every entry in `~/.claude/plugins/installed_plugins.json` (and `~/.claude/sources/<source>/skills/` for source-loaded skills), dedups by realpath to avoid double-counting plugins installed at both user and project scope, and uses the active version only (not every cached version under `~/.claude/plugins/cache/`).
+
+Real impact on a typical machine: scanned skill count jumped from 35 → 157, token cost reporting went from "9% of budget" to "123% of budget" (i.e. the user was over their context budget without knowing it).
+
+Affects every command:
+- **`scan.sh`** — emits `namespace` and `qualified_name` fields; plugin skills appear as `<plugin>:<skill>`.
+- **`detect_dupes.sh`** — surfaces cross-scope user-vs-plugin overlaps (the situation where you installed the `marketing-skills` plugin AND have a redundant user-scope `marketing-seo-audit` copy).
+- **`tokencost.sh`** — plugin skills now counted toward total context cost.
+- **`usage.sh`** — matches `/marketing-skills:image` style invocations against namespaced skills.
+
+### Commands consolidated 7 → 4
+
+- **`/janitor-report`** (default = full check, `--brief` = inventory only) replaces both `/janitor-audit` and the v1.2 `/janitor-report`.
+- **`/janitor-value`** replaces `/janitor-usage` + `/janitor-tokens` — combined view sorted by waste (heavy + unused first), which is the actually-useful question.
+- **`/janitor-discover`** replaces `/janitor-search` + `/janitor-precheck` — dispatches by arg shape (keyword → search, URL/path → precheck).
+- **`/janitor-fix`** unchanged.
+
+The four removed commands keep working as deprecated aliases for one release; they print a one-line rename notice and delegate to the new equivalent. Aliases will be removed in v1.4.
+
+### Also fixed
+- **`scan.sh` no longer double-counts user skills as project skills when run from `$HOME`.** Realpath dedup matches the existing logic for Codex.
+- **Plugin-scope label simplified to `"plugin"`** (was previously planned as `"plugin-marketplace"/"plugin-cache"`). Plugin install scope is a property of the plugin, not the skill.
+- **`for_each_skill_dir` in `paths.sh` now iterates plugin and source dirs too**, with namespace passed as a 4th callback arg. All consumers (detect_dupes, tokencost, usage, precheck) pick up plugin coverage automatically.
+
+### Migration
+
+| v1.2 command | v1.3 equivalent |
+|---|---|
+| `/janitor-audit` | `/janitor-report --brief` |
+| `/janitor-usage` | `/janitor-value` |
+| `/janitor-tokens` | `/janitor-value` |
+| `/janitor-search <kw>` | `/janitor-discover <kw>` |
+| `/janitor-precheck <url>` | `/janitor-discover <url>` |
+
 ## v1.2.0 (2026-04-29)
 
 ### Fixed (correctness)
