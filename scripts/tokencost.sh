@@ -42,6 +42,7 @@ trap "rm -f $TMPFILE" EXIT
 scan_skills() {
     local dir="$1"
     local scope="$2"
+    local namespace="${3:-}"
     [[ -d "$dir" ]] || return
 
     for skill_dir in "$dir"/*/; do
@@ -68,12 +69,16 @@ scan_skills() {
         local realpath
         realpath=$(cd "$skill_dir" 2>/dev/null && pwd -P || echo "$skill_dir")
 
-        printf '%s\t%s\t%s\t%s\t%s\n' "$scope" "$name" "$realpath" "$word_count" "$desc" >> "$TMPFILE"
+        # Display name uses Claude's namespaced convention for plugin skills
+        local display_name="$name"
+        [[ -n "$namespace" ]] && display_name="${namespace}:${name}"
+
+        printf '%s\t%s\t%s\t%s\t%s\n' "$scope" "$display_name" "$realpath" "$word_count" "$desc" >> "$TMPFILE"
     done
 }
 
-# Scan all platforms (Claude Code + Codex)
-_token_scan() { scan_skills "$1" "$2"; }
+# Scan all platforms (Claude Code + Codex + plugins + sources)
+_token_scan() { scan_skills "$1" "$2" "$4"; }
 for_each_skill_dir _token_scan
 
 # --- Export for Python ---

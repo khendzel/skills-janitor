@@ -48,6 +48,7 @@ trap "rm -f $SKILLS_TMPFILE" EXIT
 collect_skills() {
     local dir="$1"
     local scope="$2"
+    local namespace="${3:-}"
     [[ -d "$dir" ]] || return
 
     for skill_dir in "$dir"/*/; do
@@ -67,12 +68,18 @@ collect_skills() {
         local desc
         desc=$(awk 'NR==1 && /^---$/{started=1; next} started && /^---$/{exit} started && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/"/,""); print}' "$skill_file" | tr '[:upper:]' '[:lower:]')
 
-        printf '%s\t%s\t%s\n' "$scope" "$name" "$desc" >> "$SKILLS_TMPFILE"
+        # Qualified name matches Claude's invocation syntax for plugin skills
+        # (e.g. "marketing-skills:image"). Slash-command matching below uses
+        # this exact form to detect plugin-skill invocations in history.
+        local display_name="$name"
+        [[ -n "$namespace" ]] && display_name="${namespace}:${name}"
+
+        printf '%s\t%s\t%s\n' "$scope" "$display_name" "$desc" >> "$SKILLS_TMPFILE"
     done
 }
 
-# Scan all platforms (Claude Code + Codex)
-_usage_scan() { collect_skills "$1" "$2"; }
+# Scan all platforms (Claude Code + Codex + plugins + sources)
+_usage_scan() { collect_skills "$1" "$2" "$4"; }
 for_each_skill_dir _usage_scan
 
 # --- Run analysis ---

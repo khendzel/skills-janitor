@@ -16,6 +16,7 @@ trap "rm -f $TMPFILE" EXIT
 extract_skills() {
     local dir="$1"
     local scope="$2"
+    local namespace="${3:-}"
     [[ -d "$dir" ]] || return
 
     for skill_dir in "$dir"/*/; do
@@ -43,12 +44,19 @@ extract_skills() {
         local realpath
         realpath=$(cd "$skill_dir" 2>/dev/null && pwd -P || echo "$skill_dir")
 
-        printf '%s\t%s\t%s\t%s\n' "$scope" "$name" "$realpath" "$desc" >> "$TMPFILE"
+        # Qualified name: <namespace>:<folder> for plugin/source skills,
+        # plain folder otherwise. Two user-scope skills both named "foo"
+        # ARE a name collision; user "foo" and plugin "x:foo" are NOT —
+        # they have distinct invocation names by Claude's convention.
+        local qualified="$name"
+        [[ -n "$namespace" ]] && qualified="${namespace}:${name}"
+
+        printf '%s\t%s\t%s\t%s\t%s\n' "$scope" "$qualified" "$realpath" "$desc" "$namespace" >> "$TMPFILE"
     done
 }
 
-# Scan all platforms (Claude Code + Codex)
-_dupes_scan() { extract_skills "$1" "$2"; }
+# Scan all platforms (Claude Code + Codex + plugins + sources)
+_dupes_scan() { extract_skills "$1" "$2" "$4"; }
 for_each_skill_dir _dupes_scan
 
 echo "=== Skills Janitor - Duplicate Detection ==="
@@ -76,12 +84,18 @@ with open(tmpfile) as f:
         line = line.rstrip("\n")
         if not line:
             continue
-        parts = line.split("\t", 3)
-        # Tolerate older 3-column rows (no realpath) for forward compatibility
-        while len(parts) < 4:
+        parts = line.split("\t", 4)
+        # Tolerate older row shapes for forward compatibility
+        while len(parts) < 5:
             parts.append("")
-        scope, name, realpath, desc = parts
-        raw_skills.append({"scope": scope, "name": name, "realpath": realpath, "desc": desc})
+        scope, name, realpath, desc, namespace = parts
+        raw_skills.append({
+            "scope": scope,
+            "name": name,           # qualified name: <ns>:<folder> for plugin, folder otherwise
+            "realpath": realpath,
+            "desc": desc,
+            "namespace": namespace,
+        })
 
 if not raw_skills:
     print("No skills found to analyze.")
