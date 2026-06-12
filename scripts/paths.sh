@@ -31,6 +31,10 @@ ALL_SKILL_DIRS=()
 add_dir() {
     local path="$1" scope="$2" platform="$3" namespace="${4:-}"
     [[ -d "$path" ]] && ALL_SKILL_DIRS+=("$scope|$platform|$namespace|$path")
+    # Without this, a missing dir makes the `&&` short-circuit return 1, which
+    # aborts the whole scan under `set -euo pipefail` (e.g. when ~/.agents/skills
+    # does not exist on a Claude-only install).
+    return 0
 }
 
 add_dir "$CLAUDE_USER_SKILLS" "user" "claude"
