@@ -1,12 +1,12 @@
 # Skills Janitor
 
-> Audit and clean up your Claude Code skills. 4 commands, zero dependencies.
+> Audit and clean up your Claude Code skills. 5 commands, zero dependencies.
 
 Works with **Claude Code** and **OpenAI Codex**.
 
 ![Skills Janitor — plugin visibility release](hero.png)
 
-Scans every place a skill lives: user, project, codex, and (as of v1.3) every skill installed via `/plugin install`. Surfaces duplicates, broken symlinks, and unused skills cluttering your context.
+Scans every place a skill lives: user, project, codex, and every skill installed via `/plugin install`. Surfaces duplicates, broken symlinks, and unused skills cluttering your context — and (new in v1.4) lets you swipe through them like Tinder.
 
 ## Commands
 
@@ -16,6 +16,7 @@ Scans every place a skill lives: user, project, codex, and (as of v1.3) every sk
 | `/janitor-fix` | Auto-fix issues. `--prune` removes broken symlinks and empty dirs. |
 | `/janitor-value` | Combined token + usage view, sorted by waste. |
 | `/janitor-discover` | Search GitHub for skills, or check a URL before installing. |
+| `/janitor-swipe` | Interactive TUI — swipe keep/delete/skip on every installed skill, sorted most-likely-waste first. (v1.4+) |
 
 Each has its own slash command. Or use natural language: *"check my skills"*, *"which skills are wasting context?"*, *"find an n8n skill"*.
 
@@ -31,6 +32,20 @@ Or clone directly:
 ```bash
 git clone https://github.com/khendzel/skills-janitor ~/.claude/skills/skills-janitor
 ```
+
+## Swipe through your skills (v1.4)
+
+Tinder-style triage for your skill collection. The deck is sorted heaviest-and-least-used first, so most users hit `← delete` through the top 5–10 cards and quit before reviewing everything.
+
+```
+!bash ~/.claude/skills/skills-janitor/scripts/swipe.sh
+```
+
+(The `!` prefix runs in your terminal, not the Claude Code Bash tool — the TUI needs a real interactive stdin.)
+
+Controls: `←` delete, `→` keep, `↓` skip, `u` undo, `i` inspect full description, `q` quit.
+
+Plugin skills are flagged for review (you can't `rm` individual plugin skills — they belong to a plugin). User-scope skills stage for actual deletion, applied on `y` confirmation at the end.
 
 ## What v1.3 catches that v1.2 missed
 

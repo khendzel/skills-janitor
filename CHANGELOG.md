@@ -1,5 +1,52 @@
 # Changelog
 
+## v1.4.0 (2026-05-25)
+
+### `/janitor-swipe` — Tinder for your Claude Code skills
+
+A new bash TUI that puts every installed skill into a sorted deck and lets you swipe `keep` / `delete` / `skip` on each one. The deck is sorted "most likely waste first" so the cards you'd actually want to delete appear at the top — most users hit `←` a few times on the heavy-and-unused entries and quit before reviewing the whole list.
+
+The killer ratio: on a typical machine, you can reclaim 30–40% of your skill token cost in under a minute of swiping.
+
+### What you see
+
+Each card shows skill name, position in deck, token cost (% of context budget), usage count and last invoked date, scope, 3-line description, and a verdict label like *"Heavy + unused — likely dead weight"*. The scoring formula prioritizes high-token + zero-usage + stale-last-use combinations.
+
+Controls follow the obvious mappings: arrows or `hjkl` for left/right/down, `u` to undo, `i` to inspect the full description, `q` to quit.
+
+### Honest about what it can delete
+
+User-scope, project-scope, and Codex skills get staged for actual `rm -rf` on the swiped-left list. Plugin-namespaced skills (which can't be individually deleted — they belong to a plugin) get flagged in a separate "plugins to review" section with a hint to run `/plugin uninstall <plugin>` if you swiped delete on enough of its skills. Symlinks are unlinked, never followed.
+
+### Apply screen
+
+After the last card (or `q`), a summary screen shows keep/skip/delete counts, the actual deletion list with paths, the plugin review breakdown, and a prompt:
+
+- `y` — apply deletions immediately, log to `~/.skills-janitor/log.jsonl`
+- `N` — cancel, no changes
+- `save` — write decisions to `~/.skills-janitor/swipe-<timestamp>.json`; apply later with `swipe.sh --apply <file>`
+
+### Why you have to run it via `!`
+
+The TUI needs an interactive terminal for `read -rsn1` keypress capture. Inside Claude Code, the Bash tool's stdin is non-interactive, so the script detects that and prints a friendly error. The intended invocation is:
+
+```
+!bash ~/.claude/skills/skills-janitor/scripts/swipe.sh
+```
+
+The `!` prefix routes the command through your real shell, where keypresses work.
+
+### Implementation notes
+
+- Pure bash + python3 (same dependency footprint as the rest of the project), no TUI library
+- Bash 3 compatible (macOS default) — no associative arrays, all aggregation via tempfiles
+- `set -euo pipefail` throughout, terminal state restored on any exit path
+- Edge cases handled: no skills installed, terminal < 50 cols or < 22 rows, no TTY, Ctrl-C mid-swipe, save-and-resume across sessions
+
+### v1.3 aliases still working
+
+The five v1.2 deprecated aliases (`janitor-audit`, `janitor-usage`, `janitor-tokens`, `janitor-search`, `janitor-precheck`) are unchanged. They keep working through v1.4 and will be removed in v1.5.
+
 ## v1.3.0 (2026-05-22)
 
 ### Plugin skills are now visible
