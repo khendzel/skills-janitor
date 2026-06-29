@@ -1,12 +1,14 @@
 # Skills Janitor
 
-> Audit and clean up your Claude Code skills. 5 commands, zero dependencies.
+> Tinder for your Claude Code skills. Swipe through your collection and delete what's wasting context, in seconds.
 
-Works with **Claude Code** and **OpenAI Codex**.
+Works with **Claude Code** and **OpenAI Codex**. 5 commands, zero dependencies.
 
-![Skills Janitor — plugin visibility release](hero.png)
+![/janitor-swipe — swipe keep / delete / skip through every installed skill](janitor-swipe-demo.gif)
 
-Scans every place a skill lives: user, project, codex, and every skill installed via `/plugin install`. Surfaces duplicates, broken symlinks, and unused skills cluttering your context — and (new in v1.4) lets you swipe through them like Tinder.
+> **New in v1.4: `/janitor-swipe`.** Every installed skill becomes a card, sorted heaviest-and-least-used first. Swipe left to delete, right to keep, down to skip. Most setups clear 30–40% of their skill token cost before the deck even ends. [Jump to swipe →](#swipe-through-your-skills-v14)
+
+Scans every place a skill lives: user, project, codex, and every skill installed via `/plugin install`. Surfaces duplicates, broken symlinks, and unused skills cluttering your context.
 
 ## Commands
 
