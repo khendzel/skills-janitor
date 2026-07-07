@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.4.1 (2026-07-07)
+
+Hotfix release. A deep-dive review found bugs that made v1.2–v1.4 silently broken on most machines. If any janitor command ever exited with no output at all — this is why. Upgrade.
+
+### Fixed
+
+- **Every script died silently on Claude-only installs.** `paths.sh`'s `add_dir` returned non-zero when a default directory was missing (e.g. no `~/.agents/skills` because you don't use Codex), and `set -e` killed the sourcing script before it printed anything. Affected every command since v1.2.0. Also fixed the empty-array-under-`set -u` crash (bash 3.2) for machines with no skill directories at all.
+- **Usage tracking looked for conversation history at a non-standard path**, so on standard installs every skill was reported "never used" — which fed the swipe deck the wrong verdicts. History is now resolved from `$CLAUDE_CONFIG_DIR/history.jsonl`, `~/.claude/history.jsonl`, then `~/.claude-account-*/history.jsonl`; a missing file degrades gracefully instead of crashing the Python stage.
+- **`/janitor-fix --apply` could corrupt SKILL.md files on macOS.** BSD `sed a\` glued inserted text onto the following line (`description: "..."---`, unclosed frontmatter), and the `name:`/`description:` matchers also hit example frontmatter in skill *bodies*. All frontmatter edits now use awk, anchored to the first match inside the frontmatter only.
+- **Bare plugin-skill invocations now count.** `/janitor-audit` in your history is matched to `skills-janitor:janitor-audit`; previously only the fully-qualified form counted, so plugin skills you use daily showed `0×` in `/janitor-value` and the swipe deck.
+- **Empty-body detection produced `0\n0`** (`grep -c … || echo 0`) which broke an arithmetic comparison — lint silently dropped its "very little body content" warning.
+
+### Known issues (planned for v1.5)
+
+- `usage.sh` doesn't dedupe skills reachable from two paths (symlinked Claude+Codex installs show duplicate rows).
+- Token cost reports the full SKILL.md size; only the description is always-loaded (the body loads on demand). A split cost view is planned.
+
 ## v1.4.0 (2026-05-25)
 
 ### `/janitor-swipe` — Tinder for your Claude Code skills

@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Audit, track usage, and manage your Claude Code skills. 5 actions, zero dependencies. v1.4 adds interactive Tinder-style skill triage.",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "repository": "https://github.com/khendzel/skills-janitor"
   },
   "plugins": [

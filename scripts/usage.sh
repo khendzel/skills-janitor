@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # --- Export for Python ---
-export WEEKS JSON_OUTPUT DATA_DIR
+export WEEKS JSON_OUTPUT DATA_DIR HISTORY_FILE
 
 # --- Load platform paths ---
 source "$(dirname "$0")/paths.sh"
@@ -30,11 +30,25 @@ source "$(dirname "$0")/paths.sh"
 # --- Paths ---
 USER_SKILLS="$CLAUDE_USER_SKILLS"
 PROJECT_SKILLS="$CLAUDE_PROJECT_SKILLS"
-HISTORY_FILE="$HOME/.claude-account-personal/history.jsonl"
 
-if [[ ! -f "$HISTORY_FILE" ]]; then
-    echo "WARNING: Claude history file not found at $HISTORY_FILE" >&2
-    echo "Usage tracking requires Claude Code conversation history." >&2
+# Resolve the conversation-history file. Order: explicit CLAUDE_CONFIG_DIR,
+# the standard install location, then multi-account config dirs. The old
+# code hardcoded a single non-standard path, so standard installs found no
+# history and every skill was reported as "never used".
+HISTORY_FILE=""
+for _cand in \
+    "${CLAUDE_CONFIG_DIR:-/nonexistent}/history.jsonl" \
+    "$HOME/.claude/history.jsonl" \
+    "$HOME"/.claude-account-*/history.jsonl; do
+    if [[ -f "$_cand" ]]; then
+        HISTORY_FILE="$_cand"
+        break
+    fi
+done
+
+if [[ -z "$HISTORY_FILE" ]]; then
+    echo "WARNING: Claude history file not found (looked in \$CLAUDE_CONFIG_DIR, ~/.claude, ~/.claude-account-*)" >&2
+    echo "Usage tracking requires Claude Code conversation history; counts will show as 0." >&2
     # Don't exit - still scan skills for inventory
 fi
 
@@ -94,7 +108,7 @@ from datetime import datetime, timedelta, timezone
 WEEKS = int(os.environ.get("WEEKS", "4"))
 JSON_OUTPUT = os.environ.get("JSON_OUTPUT", "false") == "true"
 SKILLS_FILE = os.environ.get("SKILLS_TMPFILE", "")
-HISTORY_FILE = os.path.expanduser("~/.claude-account-personal/history.jsonl")
+HISTORY_FILE = os.environ.get("HISTORY_FILE", "")
 DATA_DIR = os.environ.get("DATA_DIR", "")
 
 # System commands to filter out (not skill invocations)
@@ -156,8 +170,15 @@ estimated_counts = defaultdict(lambda: defaultdict(int))
 last_used = {}  # skill -> timestamp
 weekly_totals = defaultdict(int)
 
-with open(HISTORY_FILE) as f:
-    for line in f:
+# Missing history is a soft condition (warned by the bash wrapper): skills
+# are still inventoried, all counts stay 0. The old unguarded open() made
+# the whole script die with a traceback on standard installs.
+history_lines = []
+if HISTORY_FILE and os.path.isfile(HISTORY_FILE):
+    with open(HISTORY_FILE) as f:
+        history_lines = f.readlines()
+
+for line in history_lines:
         line = line.strip()
         if not line:
             continue
@@ -185,16 +206,30 @@ with open(HISTORY_FILE) as f:
             if is_slash and cmd in SYSTEM_COMMANDS:
                 continue
 
-            # Match against known skills
+            # Match against known skills. Plugin skills are registered under
+            # their qualified name (<plugin>:<skill>) but Claude Code accepts
+            # the bare form too (`/janitor-audit` for
+            # `skills-janitor:janitor-audit`) — match both, exact-name first
+            # across all skills so a user-scope skill wins over a bare plugin
+            # alias with the same name.
             cmd_name = cmd.lstrip("/").lstrip("$.")
+            matched = None
             for s in skills:
-                if cmd_name == s["name"] or cmd_name.startswith(s["name"] + " "):
-                    explicit_counts[s["name"]][week_key] += 1
-                    last_used[s["name"]] = max(
-                        last_used.get(s["name"], entry_time), entry_time
-                    )
-                    weekly_totals[week_key] += 1
+                if cmd_name == s["name"]:
+                    matched = s
                     break
+            if matched is None and ":" not in cmd_name:
+                for s in skills:
+                    if ":" in s["name"] and cmd_name == s["name"].split(":", 1)[1]:
+                        matched = s
+                        break
+            if matched is not None:
+                name = matched["name"]
+                explicit_counts[name][week_key] += 1
+                last_used[name] = max(
+                    last_used.get(name, entry_time), entry_time
+                )
+                weekly_totals[week_key] += 1
         else:
             # --- Natural language detection ---
             input_words = set(re.findall(r'[a-z]+', display.lower()))

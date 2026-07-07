@@ -121,7 +121,9 @@ lint_skill() {
 
     # Check body content
     local body_lines
-    body_lines=$(tail -n +"$((fm_close + 1))" "$skill_file" | grep -c '[^ ]' 2>/dev/null || echo "0")
+    # `|| true`, not `|| echo 0` — grep -c already prints "0" on no matches
+    body_lines=$(tail -n +"$((fm_close + 1))" "$skill_file" | grep -c '[^ ]' 2>/dev/null || true)
+    body_lines=${body_lines:-0}
     if [[ "$body_lines" -lt 3 ]]; then
         print_issue "warning" "$name" "Very little body content ($body_lines non-empty lines)"
     fi

@@ -442,7 +442,8 @@ do_apply() {
         # Build "plugin deleted total" tuples
         sort "$plugin_delete_tmp" | uniq -c | while read -r n_delete plugin; do
             local n_total
-            n_total=$(grep -c "^${plugin}$" "$plugin_total_tmp" || echo "$n_delete")
+            n_total=$(grep -c "^${plugin}$" "$plugin_total_tmp" || true)
+            [[ -z "$n_total" || "$n_total" -eq 0 ]] && n_total="$n_delete"
             printf "  %-25s ${DIM}%s of %s swiped delete${RESET}  →  consider ${BOLD}/plugin uninstall %s${RESET}\n" "$plugin" "$n_delete" "$n_total" "$plugin"
         done
         printf "\n"

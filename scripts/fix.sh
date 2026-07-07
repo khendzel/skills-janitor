@@ -91,12 +91,13 @@ fix_skill() {
         if head -5 "$skill_file" | grep -qE '^(name|description|version):'; then
             new_content="---
 $new_content"
-            # Find where frontmatter-like content ends and add closing ---
+            # Find where frontmatter-like content ends and add closing ---.
+            # awk, not `sed Na\` — BSD sed glues the appended line onto the
+            # following one (no trailing newline), corrupting the file.
             local fm_end
             fm_end=$(echo "$new_content" | awk 'NR==1{next} NR>1 && !/^[a-z_]+:/ && !/^---$/ && !/^[[:space:]]*$/{print NR-1; exit}')
             if [[ -n "$fm_end" && "$fm_end" -gt 1 ]]; then
-                new_content=$(echo "$new_content" | sed "${fm_end}a\\
----")
+                new_content=$(echo "$new_content" | awk -v n="$fm_end" 'NR==n {print; print "---"; next} {print}')
             fi
             modified=true
             log_change "$name" "Added missing frontmatter delimiters (---)"
@@ -112,8 +113,8 @@ $new_content"
             local insert_after
             insert_after=$(awk 'NR==1{next} /^[a-z_]+:/{last=NR} END{print last}' "$skill_file")
             if [[ -n "$insert_after" ]]; then
-                new_content=$(echo "$new_content" | sed "${insert_after}a\\
----")
+                # awk, not `sed Na\` — see BSD sed note in Fix 1
+                new_content=$(echo "$new_content" | awk -v n="$insert_after" 'NR==n {print; print "---"; next} {print}')
                 modified=true
                 log_change "$name" "Added missing closing --- delimiter"
             fi
@@ -129,25 +130,44 @@ $new_content"
         local has_desc
         if echo "$frontmatter" | grep -q '^description:' 2>/dev/null; then has_desc=1; else has_desc=0; fi
 
+        # Template description injected below. All edits use awk anchored to
+        # the FIRST match INSIDE the frontmatter only — the previous sed
+        # variants (a) matched every `^name:`/`^description:` line including
+        # ones in the skill BODY (docs that show example frontmatter), and
+        # (b) on BSD sed glued the appended text onto the next line,
+        # producing `description: "..."---` and an unclosed frontmatter.
+        local desc_template
+        desc_template="description: \"Use when the user wants to use $name. Add specific trigger phrases here.\""
+
         if [[ "$has_desc" -eq 0 ]]; then
             # Add description after name field or as first frontmatter field
             local has_name
             if echo "$frontmatter" | grep -q '^name:' 2>/dev/null; then has_name=1; else has_name=0; fi
             if [[ "$has_name" -gt 0 ]]; then
-                new_content=$(echo "$new_content" | sed '/^name:/a\
-description: "Use when the user wants to use '"$name"'. Add specific trigger phrases here."')
+                new_content=$(echo "$new_content" | awk -v tmpl="$desc_template" '
+                    NR>1 && /^---$/ { fm_done=1 }
+                    !fm_done && !ins && /^name:/ { print; print tmpl; ins=1; next }
+                    { print }
+                ')
             else
-                new_content=$(echo "$new_content" | sed '1a\
-description: "Use when the user wants to use '"$name"'. Add specific trigger phrases here."')
+                new_content=$(echo "$new_content" | awk -v tmpl="$desc_template" '
+                    NR==1 { print; print tmpl; next }
+                    { print }
+                ')
             fi
             modified=true
             log_change "$name" "Added template description field"
         else
             # Check if description is empty
             local desc_value
-            desc_value=$(echo "$frontmatter" | grep '^description:' | sed 's/^description:[[:space:]]*//' | tr -d '"' | tr -d "'" | xargs 2>/dev/null || echo "")
+            desc_value=$(echo "$frontmatter" | grep '^description:' | head -1 | sed 's/^description:[[:space:]]*//' | tr -d '"' | tr -d "'" | xargs 2>/dev/null || echo "")
             if [[ -z "$desc_value" ]]; then
-                new_content=$(echo "$new_content" | sed 's/^description:[[:space:]]*/description: "Use when the user wants to use '"$name"'. Add specific trigger phrases here."/')
+                # Replace only the first frontmatter description line
+                new_content=$(echo "$new_content" | awk -v tmpl="$desc_template" '
+                    NR>1 && /^---$/ { fm_done=1 }
+                    !fm_done && !rep && /^description:/ { print tmpl; rep=1; next }
+                    { print }
+                ')
                 modified=true
                 log_change "$name" "Filled empty description with template"
             fi

@@ -89,7 +89,11 @@ scan_skill() {
         body_start=$(awk '/^---$/{c++; if(c==2){print NR; exit}}' "$skill_file" 2>/dev/null || echo "0")
         if [[ "$body_start" -gt 0 ]]; then
             local remaining
-            remaining=$(tail -n +"$((body_start + 1))" "$skill_file" | grep -c '[^ ]' 2>/dev/null || echo "0")
+            # `|| true`, not `|| echo 0` — grep -c already prints "0" when it
+            # exits 1 (no matches), so the old form yielded "0\n0" and broke
+            # the arithmetic comparison below.
+            remaining=$(tail -n +"$((body_start + 1))" "$skill_file" | grep -c '[^ ]' 2>/dev/null || true)
+            remaining=${remaining:-0}
             if [[ "$remaining" -gt 0 ]]; then
                 has_body="true"
             fi

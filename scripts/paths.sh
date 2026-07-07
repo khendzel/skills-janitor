@@ -30,7 +30,13 @@ ALL_SKILL_DIRS=()
 
 add_dir() {
     local path="$1" scope="$2" platform="$3" namespace="${4:-}"
-    [[ -d "$path" ]] && ALL_SKILL_DIRS+=("$scope|$platform|$namespace|$path")
+    # An explicit `if` (not `[[ ]] &&`) so a missing directory doesn't make
+    # the function return 1 — every caller sources this under `set -e`, and
+    # the bare && form silently killed all scripts on machines without e.g.
+    # ~/.agents/skills (any Claude-only install).
+    if [[ -d "$path" ]]; then
+        ALL_SKILL_DIRS+=("$scope|$platform|$namespace|$path")
+    fi
 }
 
 add_dir "$CLAUDE_USER_SKILLS" "user" "claude"
@@ -47,7 +53,9 @@ _add_project_dir() {
     local real_path
     real_path=$(cd "$path" 2>/dev/null && pwd -P || echo "")
     local dominated=false
-    for existing in "${ALL_SKILL_DIRS[@]}"; do
+    # ${arr[@]+...} guard: bash 3.2 treats "${arr[@]}" on an EMPTY array as an
+    # unbound variable under `set -u`. Same idiom used on every expansion below.
+    for existing in ${ALL_SKILL_DIRS[@]+"${ALL_SKILL_DIRS[@]}"}; do
         local existing_path="${existing##*|}"
         local existing_real
         existing_real=$(cd "$existing_path" 2>/dev/null && pwd -P || echo "")
@@ -122,7 +130,7 @@ fi
 # --- Detect which platforms are present ---
 HAS_CLAUDE=false
 HAS_CODEX=false
-for entry in "${ALL_SKILL_DIRS[@]}"; do
+for entry in ${ALL_SKILL_DIRS[@]+"${ALL_SKILL_DIRS[@]}"}; do
     if [[ "$entry" == *"|claude|"* ]]; then
         HAS_CLAUDE=true
     elif [[ "$entry" == *"|codex|"* ]]; then
@@ -138,7 +146,7 @@ done
 # continue to work.
 for_each_skill_dir() {
     local callback="$1"
-    for entry in "${ALL_SKILL_DIRS[@]}"; do
+    for entry in ${ALL_SKILL_DIRS[@]+"${ALL_SKILL_DIRS[@]}"}; do
         local scope="${entry%%|*}"
         local rest="${entry#*|}"
         local platform="${rest%%|*}"
