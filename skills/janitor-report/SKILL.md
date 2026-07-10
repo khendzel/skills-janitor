@@ -2,12 +2,12 @@
 name: janitor-report
 description: "Full health check of all your skills in one report. Use when the user wants to check for errors, find duplicates, detect broken skills, or get a complete overview of skill health. Pass --brief for inventory only."
 metadata:
-  version: 1.3.0
+  version: 1.5.0
 ---
 
 # Health Report
 
-Generate a comprehensive health report combining inventory, quality checks, duplicate detection, and broken skill findings.
+Generate a comprehensive health report combining inventory, quality checks, duplicate detection, and broken skill findings. The scan JSON also includes an `agents` array (subagents from ~/.claude/agents — their descriptions are always-loaded too) and per-plugin `update_available` (installed commit vs marketplace HEAD) — surface stale plugins and heavy agents in the report.
 
 As of v1.3, the report covers plugin-namespaced skills (e.g. `marketing-skills:image`, `figma:figma-use`) in addition to user and project scope — these were invisible to the v1.2 report.
 

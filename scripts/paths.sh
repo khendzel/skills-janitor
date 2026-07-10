@@ -157,6 +157,26 @@ for_each_skill_dir() {
     done
 }
 
+# --- Shared: extract the description from SKILL.md frontmatter ---
+# Handles inline scalars AND block scalars (|, >, |-, >-, or a bare
+# `description:` followed by indented lines). Skills with folded
+# descriptions previously read as empty, which made the always-loaded
+# token split report 0 for them and hid them from duplicate detection.
+extract_description() {
+    local file="$1"
+    awk '
+        NR==1 && /^---$/ {started=1; next}
+        started && /^---$/ {exit}
+        started && !block && /^description:/ {
+            val=$0; sub(/^description:[[:space:]]*/, "", val); gsub(/"/, "", val)
+            if (val=="" || val=="|" || val==">" || val=="|-" || val==">-") {block=1; next}
+            print val; exit
+        }
+        started && block && /^[[:space:]]+/ {line=$0; sub(/^[[:space:]]+/, "", line); printf "%s ", line; next}
+        started && block {exit}
+    ' "$file" 2>/dev/null | sed 's/[[:space:]]*$//'
+}
+
 # --- Platform display ---
 platform_label() {
     if [[ "$HAS_CLAUDE" == "true" && "$HAS_CODEX" == "true" ]]; then

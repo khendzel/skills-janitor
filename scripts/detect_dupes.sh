@@ -17,7 +17,7 @@ extract_skills() {
     local dir="$1"
     local scope="$2"
     local namespace="${3:-}"
-    [[ -d "$dir" ]] || return
+    [[ -d "$dir" ]] || return 0
 
     for skill_dir in "$dir"/*/; do
         [[ -d "$skill_dir" ]] || continue
@@ -35,7 +35,7 @@ extract_skills() {
 
         # Extract description
         local desc
-        desc=$(awk 'NR==1 && /^---$/{started=1; next} started && /^---$/{exit} started && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/"/,""); print}' "$skill_file" | tr '[:upper:]' '[:lower:]')
+        desc=$(extract_description "$skill_file" | tr '[:upper:]' '[:lower:]')
 
         # Resolve symlinks so the same physical SKILL.md gets one record,
         # not one-per-shadow. ~/.claude/skills entries that symlink to

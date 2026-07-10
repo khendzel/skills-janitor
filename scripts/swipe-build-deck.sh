@@ -10,7 +10,9 @@ set -euo pipefail
 command -v python3 &>/dev/null || { echo "ERROR: python3 required" >&2; exit 1; }
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-OUTPUT="${1:-/tmp/janitor-swipe-deck.json}"
+# Per-process default path — a fixed /tmp name made concurrent runs clobber
+# each other's decks.
+OUTPUT="${1:-/tmp/janitor-swipe-deck.$$.json}"
 
 # Refresh usage data (writes data/usage-history.json that tokencost reads)
 bash "$SCRIPT_DIR/usage.sh" --json >/dev/null 2>&1 || true
@@ -36,18 +38,29 @@ with open(token_file) as f:
 with open(scan_file) as f:
     scan = json.load(f)
 
-# scan_index by qualified_name (matches the display name tokencost uses)
+# Index scan records two ways: by realpath (primary — two physical copies of
+# the same skill name must map to their OWN cards/paths, or one copy becomes
+# undeletable) and by qualified_name (fallback).
+scan_by_realpath = {}
 scan_index = {}
 for s in scan.get("skills", []):
     qn = s.get("qualified_name") or s.get("folder")
-    scan_index[qn] = s
+    scan_index.setdefault(qn, s)
+    p = s.get("path")
+    if p:
+        try:
+            scan_by_realpath[os.path.realpath(p)] = s
+        except OSError:
+            pass
 
 budget = tcost.get("budget", 200000)
 cards = []
 
 for s in tcost.get("skills", []):
     name = s["name"]
-    scan_match = scan_index.get(name, {})
+    rp = s.get("realpath") or ""
+    scan_match = (scan_by_realpath.get(os.path.realpath(rp)) if rp else None) \
+        or scan_index.get(name, {})
 
     tokens = s.get("tokens", 0)
     tokens_pct = (tokens / budget * 100) if budget > 0 else 0
@@ -77,9 +90,12 @@ for s in tcost.get("skills", []):
     if scope == "project":
         score -= 30  # project skills are usually intentional, downrank
 
-    # Verdict label by bucket
+    # Verdict label by bucket. Wording is careful not to claim the body is
+    # permanent context cost — ranking still weighs total SKILL.md size
+    # (an unused skill with a 22k body is a prime delete candidate), but the
+    # "cost" language stays honest about what's always loaded.
     if score >= 70:
-        verdict_label = "Heavy + unused — likely dead weight"
+        verdict_label = "Unused + heavy on trigger — prime delete candidate"
         verdict_tone = "warn"
     elif score >= 40:
         verdict_label = "Rarely used"
@@ -98,6 +114,8 @@ for s in tcost.get("skills", []):
         "namespace": namespace,
         "path": path,
         "tokens": tokens,
+        "desc_tokens": s.get("desc_tokens", 0),
+        "body_tokens": s.get("body_tokens", 0),
         "tokens_pct_budget": round(tokens_pct, 2),
         "invocations": invocations,
         "last_used": last_used,

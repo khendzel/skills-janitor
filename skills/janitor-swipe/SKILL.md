@@ -2,7 +2,7 @@
 name: janitor-swipe
 description: "Tinder for your Claude Code skills. Reviews a sorted deck of every installed skill and lets you swipe keep / delete / skip on each one. Use when the user wants to bulk-clean their skill collection, triage unused skills, or do interactive skill cleanup."
 metadata:
-  version: 1.4.0
+  version: 1.5.0
 ---
 
 # Janitor Swipe — interactive skill triage
@@ -23,7 +23,7 @@ When the user asks for `/janitor-swipe`, tell them to run that command in their 
 
 Each card shows:
 - Skill name + position in deck (e.g. `[3 / 47]`)
-- Token cost (raw + % of context budget)
+- Context cost split: `X always · Y on trigger` (description tokens are permanent; body loads only when the skill fires)
 - Usage count and last invoked date
 - Scope (`user`, `project`, `plugin · <plugin-name>`, etc.)
 - 3-line truncated description

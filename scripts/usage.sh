@@ -63,7 +63,7 @@ collect_skills() {
     local dir="$1"
     local scope="$2"
     local namespace="${3:-}"
-    [[ -d "$dir" ]] || return
+    [[ -d "$dir" ]] || return 0
 
     for skill_dir in "$dir"/*/; do
         [[ -d "$skill_dir" ]] || continue
@@ -80,7 +80,7 @@ collect_skills() {
         [[ ! -e "$skill_file" ]] && continue
 
         local desc
-        desc=$(awk 'NR==1 && /^---$/{started=1; next} started && /^---$/{exit} started && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/"/,""); print}' "$skill_file" | tr '[:upper:]' '[:lower:]')
+        desc=$(extract_description "$skill_file" | tr '[:upper:]' '[:lower:]')
 
         # Qualified name matches Claude's invocation syntax for plugin skills
         # (e.g. "marketing-skills:image"). Slash-command matching below uses
@@ -88,7 +88,13 @@ collect_skills() {
         local display_name="$name"
         [[ -n "$namespace" ]] && display_name="${namespace}:${name}"
 
-        printf '%s\t%s\t%s\n' "$scope" "$display_name" "$desc" >> "$SKILLS_TMPFILE"
+        # Realpath lets python dedupe one physical skill reachable from two
+        # roots (e.g. ~/.claude/skills/foo -> ~/.agents/skills/foo symlink),
+        # which previously produced duplicate rows in every report.
+        local realpath
+        realpath=$(cd "$skill_dir" 2>/dev/null && pwd -P || echo "$skill_dir")
+
+        printf '%s\t%s\t%s\t%s\n' "$scope" "$display_name" "$realpath" "$desc" >> "$SKILLS_TMPFILE"
     done
 }
 
@@ -122,19 +128,40 @@ SYSTEM_COMMANDS = {
     "/logout", "/approved-tools", "/plan", "/todos"
 }
 
-# --- Load skills ---
+# --- Load skills, deduping by realpath ---
+# One physical SKILL.md reachable from two roots (Claude + Codex symlink
+# installs) previously produced two identical rows whose counts read from the
+# same counter — pure display noise. Keep one record; merge scope labels.
 skills = []
+_by_realpath = {}
 if SKILLS_FILE and os.path.isfile(SKILLS_FILE):
     with open(SKILLS_FILE) as f:
         for line in f:
-            line = line.strip()
-            if not line:
+            # rstrip("\n") ONLY — .strip() ate the trailing tab of rows whose
+            # description is empty, collapsing them into the legacy 3-column
+            # shape with desc = the filesystem path (and no realpath dedup).
+            line = line.rstrip("\n")
+            if not line.strip():
                 continue
-            parts = line.split("\t", 2)
-            if len(parts) < 3:
+            parts = line.split("\t", 3)
+            if len(parts) == 3:  # tolerate old 3-column rows
+                scope, name, desc = parts
+                realpath = ""
+            elif len(parts) == 4:
+                scope, name, realpath, desc = parts
+            else:
                 continue
-            scope, name, desc = parts
-            skills.append({"scope": scope, "name": name, "desc": desc})
+            key = realpath or f"{scope}/{name}"
+            if key in _by_realpath:
+                existing = _by_realpath[key]
+                if scope not in existing["scopes"]:
+                    existing["scopes"].append(scope)
+                continue
+            rec = {"scope": scope, "scopes": [scope], "name": name, "desc": desc}
+            _by_realpath[key] = rec
+            skills.append(rec)
+for s in skills:
+    s["scope"] = ",".join(sorted(s.pop("scopes")))
 
 # --- Extract keywords (reuse logic from detect_dupes.sh) ---
 STOP_WORDS = {

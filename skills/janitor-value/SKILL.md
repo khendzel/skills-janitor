@@ -2,7 +2,7 @@
 name: janitor-value
 description: "Show whether each skill is earning its context-window cost — combined tokens-used view sorted by waste. Use when the user asks 'are my skills worth it', 'what's my context budget', 'which skills are dead weight', or anything about skill value, token cost, or usage."
 metadata:
-  version: 1.3.0
+  version: 1.5.0
 ---
 
 # Skill Value Report
@@ -24,8 +24,10 @@ bash ~/.claude/skills/skills-janitor/scripts/value.sh [--weeks N] [--budget N] [
 ## Output
 
 A table of every installed skill with:
-- **Tokens** — approximate token count of the skill's SKILL.md
-- **Budget** — % of the configured context window
+- **Always** — description tokens, permanently in the system prompt (the real context rent)
+- **Body** — the rest of SKILL.md, loaded only when the skill triggers (progressive disclosure)
+
+The summary reports the always-loaded TOTAL (skills + subagent descriptions from ~/.claude/agents) as % of budget. When explaining results, do NOT describe body tokens as permanent context cost — only descriptions are always loaded.
 - **Used?** — `yes` if invoked in the lookback window, else `NO`
 - **Last Used** — date of most recent invocation
 

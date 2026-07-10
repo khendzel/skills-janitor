@@ -87,7 +87,7 @@ def github_api(url, token=""):
     """Make a GitHub API request with rate limit awareness."""
     headers = {
         "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "skills-janitor/1.2.0"
+        "User-Agent": "skills-janitor/1.5.0"
     }
     if token:
         headers["Authorization"] = f"token {token}"
@@ -169,9 +169,33 @@ if results is None:
             if fn not in all_repos:
                 all_repos[fn] = item
 
-    # Build results
+    # Build results — with a relevance gate. GitHub's search matches loosely
+    # ("n8n claude skill" happily returns firecrawl), and a plain stars sort
+    # lets mega-repos crowd out actual skills. Require a skill signal in the
+    # repo metadata, then rank by (relevance, stars).
+    SKILL_TOPICS = {"claude-code-skills", "agent-skills", "claude-skills",
+                    "claude-code-plugin", "claude-code", "skills"}
+
+    def relevance(item):
+        name = (item.get("name") or "").lower()
+        desc = (item.get("description") or "").lower()
+        topics = set(t.lower() for t in item.get("topics", []))
+        score = 0
+        if topics & SKILL_TOPICS:
+            score += 3
+        if "skill" in name:
+            score += 2
+        if "skill" in desc:
+            score += 1
+        if "claude" in name or "claude" in desc or "claude-code" in " ".join(topics):
+            score += 1
+        return score
+
     results = []
     for fn, item in all_repos.items():
+        rel = relevance(item)
+        if rel == 0:
+            continue  # no skill signal at all — noise from the loose search
         results.append({
             "full_name": fn,
             "name": item.get("name", ""),
@@ -182,10 +206,11 @@ if results is None:
             "topics": item.get("topics", []),
             "url": item.get("html_url", ""),
             "language": item.get("language", ""),
+            "relevance": rel,
         })
 
-    # Sort by stars descending
-    results.sort(key=lambda x: -x["stars"])
+    # Rank by relevance first, stars second
+    results.sort(key=lambda x: (-x["relevance"], -x["stars"]))
     results = results[:LIMIT]
     from_cache = False
 

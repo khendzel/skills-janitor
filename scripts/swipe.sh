@@ -109,6 +109,7 @@ with open(sys.argv[2], "w") as f:
             s(c.get("namespace")),
             s(c.get("path")),
             s(c.get("tokens", 0)),
+            s(c.get("desc_tokens", 0)),
             s(f'{c.get("tokens_pct_budget", 0):.1f}'),
             s(c.get("invocations", 0)),
             s(c.get("last_used", "never")),
@@ -133,12 +134,13 @@ fi
 
 # Read cards into parallel arrays. Sentinel "_" decodes back to empty (see
 # python emitter above for why this dance is needed).
-declare -a IDS NAMES SCOPES NAMESPACES PATHS TOKENS PCTS USES LAST_USED DAYS SCORES LABELS TONES DESCS DECISIONS
+declare -a IDS NAMES SCOPES NAMESPACES PATHS TOKENS DESC_TOKENS PCTS USES LAST_USED DAYS SCORES LABELS TONES DESCS DECISIONS
 unsentinel() { [[ "$1" == "_" ]] && echo "" || echo "$1"; }
-while IFS=$'\t' read -r id name scope ns path tok pct inv lu days score label tone desc dec; do
+while IFS=$'\t' read -r id name scope ns path tok dtok pct inv lu days score label tone desc dec; do
     IDS+=("$(unsentinel "$id")"); NAMES+=("$(unsentinel "$name")")
     SCOPES+=("$(unsentinel "$scope")"); NAMESPACES+=("$(unsentinel "$ns")")
     PATHS+=("$(unsentinel "$path")"); TOKENS+=("$(unsentinel "$tok")")
+    DESC_TOKENS+=("$(unsentinel "$dtok")")
     PCTS+=("$(unsentinel "$pct")"); USES+=("$(unsentinel "$inv")")
     LAST_USED+=("$(unsentinel "$lu")"); DAYS+=("$(unsentinel "$days")")
     SCORES+=("$(unsentinel "$score")"); LABELS+=("$(unsentinel "$label")")
@@ -264,7 +266,12 @@ render_card() {
     # Stats rows
     local scope_label="$scope"
     [ -n "$ns" ] && scope_label="$scope · $ns"
-    card_line "$(printf 'Tokens     %-6s (%s%% of context)' "$tokens" "$pct")"
+    local dtok="${DESC_TOKENS[$i]:-0}"
+    local body_tok=$((tokens - dtok))
+    [ "$body_tok" -lt 0 ] && body_tok=0
+    # "always" = description tokens, permanently in the system prompt;
+    # "on trigger" = the body, loaded only when the skill fires.
+    card_line "$(printf 'Context    %s always · %s on trigger' "$dtok" "$body_tok")"
 
     local use_label
     if [ "$uses" -eq 0 ]; then
@@ -380,7 +387,7 @@ read_key() {
 # ────────────────────────────────────────────────────────────────────────────
 do_apply() {
     local keep=0 delete=0 skip=0 undecided=0
-    local deleted_tokens=0
+    local deleted_tokens=0 deleted_desc_tokens=0
     local -a delete_paths delete_names delete_scopes delete_tokens_per
 
     # Tempfiles for plugin aggregation (bash 3 has no associative arrays)
@@ -400,6 +407,7 @@ do_apply() {
             delete)
                 ((delete++))
                 deleted_tokens=$((deleted_tokens + TOKENS[i]))
+                deleted_desc_tokens=$((deleted_desc_tokens + ${DESC_TOKENS[$i]:-0}))
                 if [[ "$s" == "plugin" ]] || [[ "$s" == "plugin-source" ]]; then
                     echo "${NAMESPACES[$i]}" >> "$plugin_delete_tmp"
                 else
@@ -420,9 +428,13 @@ do_apply() {
     printf "Skip:       %3d skills\n" "$skip"
     printf "Delete:     %3d skills" "$delete"
     if [[ "$delete" -gt 0 ]]; then
-        local pct
-        pct=$(python3 -c "print(f'{$deleted_tokens / $BUDGET * 100:.1f}')")
-        printf "  ${DIM}(saves ~%s tokens, %s%% of context)${RESET}" "$(printf "%'d" "$deleted_tokens" 2>/dev/null || echo "$deleted_tokens")" "$pct"
+        # Honest framing: only descriptions are permanent context cost; the
+        # body total is what those skills could pull in when triggered.
+        local body_freed=$((deleted_tokens - deleted_desc_tokens))
+        [[ "$body_freed" -lt 0 ]] && body_freed=0
+        printf "  ${DIM}(frees ~%s always-loaded tokens + %s on-trigger)${RESET}" \
+            "$(printf "%'d" "$deleted_desc_tokens" 2>/dev/null || echo "$deleted_desc_tokens")" \
+            "$(printf "%'d" "$body_freed" 2>/dev/null || echo "$body_freed")"
     fi
     printf "\n"
     [[ "$undecided" -gt 0 ]] && printf "Undecided:  %3d skills ${DIM}(treated as skip)${RESET}\n" "$undecided"

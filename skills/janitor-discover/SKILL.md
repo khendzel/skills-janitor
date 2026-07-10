@@ -2,7 +2,7 @@
 name: janitor-discover
 description: "Find new skills on GitHub or check a specific skill before installing. Use when the user wants to search for skills, evaluate a skill URL, check overlap with existing skills before installing, or compare a local skill against alternatives."
 metadata:
-  version: 1.3.0
+  version: 1.5.0
 ---
 
 # Skill Discovery & Pre-Install Check

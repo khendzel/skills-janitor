@@ -1,5 +1,48 @@
 # Changelog
 
+## v1.5.0 (2026-07-09)
+
+### Honest token costs — always-loaded vs on-demand
+
+Only skill **descriptions** sit permanently in the system prompt; the SKILL.md body loads when a skill triggers (progressive disclosure). Every cost view now reports both numbers separately instead of implying the whole file is context rent:
+
+- `/janitor-value` table: `Always` (description tokens) and `Body` (on-trigger tokens) columns, with an "Always-loaded TOTAL (% of budget)" summary.
+- Swipe cards: `Context 213 always · 5,431 on trigger`.
+- JSON adds `desc_tokens` / `body_tokens` per skill and `always_loaded_tokens` / `always_pct` totals.
+
+### Subagents are inventoried too
+
+Agents in `~/.claude/agents` and `./.claude/agents` have always-loaded descriptions just like skills — often costing more. `scan.sh` emits an `agents` array and `/janitor-value` reports their always-loaded total.
+
+### Plugin update detection
+
+`scan.sh` plugins now carry `update_available` — the installed commit compared against the marketplace clone's HEAD. `/janitor-report` can tell you which plugins are stale.
+
+### 7x faster scan
+
+`scan.sh` renders the whole JSON in a single python3 pass instead of ~6 processes per skill (55s → ~8s on a 175-skill machine). Paths and all fields are now properly JSON-escaped.
+
+### Fixed
+
+- **`/janitor-fix --prune` never actually matched broken symlinks** — the `"$dir"/*/` glob only yields entries that resolve to directories. Prune now sees and removes them; broken symlinks also appear in the scan inventory, the fix pass, and lint (whose "broken symlink" CRITICAL was unreachable for the same glob reason).
+- **`--prune` died silently when a default skills dir was missing** (bare `return` propagating status 1 under `set -e` — same class as the v1.4.1 `add_dir` bug; all five occurrences fixed).
+- **Fix 2 (missing closing `---`) could swallow the whole body into frontmatter** when the body contained a column-0 `key:` line (e.g. `usage: run it like this`) — the insertion-point scan is now limited to the leading frontmatter run.
+- **Agents/commands double-counted when running from `$HOME`** (`./.claude/agents` is the same directory as `~/.claude/agents`) — realpath dedup added, matching the skills side.
+- **Folded/multiline YAML descriptions** (`description: >` / `|`) read as empty everywhere — new shared `extract_description` helper handles block scalars for skills AND agents, so their always-loaded tokens are counted and duplicate detection sees them.
+- **Skills with an empty description broke the usage parser** (a stripped trailing tab collapsed the row into the legacy column shape, putting the filesystem path in the description and skipping dedup).
+- **Two physical copies of the same skill name produced duplicate swipe cards pointing at one path** (the second copy was undeletable) — the deck now joins tokencost↔scan records by realpath.
+- Swipe verdict labels no longer imply body tokens are permanent context cost ("Unused + heavy on trigger — prime delete candidate"), and the apply summary reports "frees X always-loaded + Y on-trigger" instead of a misleading % of context.
+- The deck builder's default output is per-process (concurrent runs clobbered a fixed `/tmp` path).
+- Duplicate rows in `/janitor-value` for one skill reachable from two roots (Claude + Codex symlink installs) — deduped by realpath, scopes merged.
+- GitHub search results are relevance-gated (repo must carry a skill signal in name/description/topics) and ranked by relevance before stars — searching "n8n" no longer returns firecrawl.
+- `precheck` with `GITHUB_TOKEN` sent a malformed Authorization header (quoting bug) — code search on private/rate-limited repos works now.
+- GNU-only `\s` in lint's seds replaced with portable `[[:space:]]` (BSD sed treated it as a literal `s`).
+- `fix.sh` changelog now lives in the plugin's own `data/` dir like every other tool (previously it fabricated `~/.claude/skills/skills-janitor/`, which looked like a skill).
+
+### Removed
+
+- The five v1.2 deprecated aliases (`janitor-audit`, `janitor-usage`, `janitor-tokens`, `janitor-search`, `janitor-precheck`) are gone, as announced. Use `/janitor-report --brief`, `/janitor-value`, `/janitor-discover`.
+
 ## v1.4.1 (2026-07-07)
 
 Hotfix release. A deep-dive review found bugs that made v1.2–v1.4 silently broken on most machines. If any janitor command ever exited with no output at all — this is why. Upgrade.

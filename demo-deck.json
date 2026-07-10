@@ -1,0 +1,257 @@
+{
+  "budget": 200000,
+  "cards": [
+    {
+      "id": "c1",
+      "name": "shopify-plugin:shopify-hydrogen",
+      "scope": "plugin",
+      "namespace": "shopify-plugin",
+      "path": "",
+      "tokens": 22285,
+      "tokens_pct_budget": 11.1,
+      "invocations": 0,
+      "last_used": "never",
+      "days_since_use": null,
+      "verdict": {
+        "score": 161.4,
+        "label": "Heavy + unused \u2014 likely dead weight",
+        "tone": "bad"
+      },
+      "description": "Build Shopify Hydrogen storefronts with framework components, routing, and cart APIs. Covers product pages, collections, checkout, and the Storefront GraphQL API.",
+      "decision": "",
+      "desc_tokens": 88,
+      "body_tokens": 22197
+    },
+    {
+      "id": "c2",
+      "name": "legacy-pdf-extractor",
+      "scope": "user",
+      "namespace": null,
+      "path": "/tmp/demo/legacy-pdf-extractor",
+      "tokens": 18400,
+      "tokens_pct_budget": 9.2,
+      "invocations": 0,
+      "last_used": "never",
+      "days_since_use": null,
+      "verdict": {
+        "score": 132.0,
+        "label": "Heavy + unused \u2014 likely dead weight",
+        "tone": "bad"
+      },
+      "description": "Extract tables and text from scanned PDFs using OCR pipelines. Handles multi-column layouts, rotated pages, and form-field detection.",
+      "decision": "",
+      "desc_tokens": 62,
+      "body_tokens": 18338
+    },
+    {
+      "id": "c3",
+      "name": "webscraper-pro",
+      "scope": "user",
+      "namespace": null,
+      "path": "/tmp/demo/webscraper-pro",
+      "tokens": 12900,
+      "tokens_pct_budget": 6.5,
+      "invocations": 0,
+      "last_used": "never",
+      "days_since_use": null,
+      "verdict": {
+        "score": 104.0,
+        "label": "Heavy + unused \u2014 likely dead weight",
+        "tone": "bad"
+      },
+      "description": "Headless-browser scraping with proxy rotation, captcha handling, and structured extraction into JSON. Includes rate-limit backoff and retry logic.",
+      "decision": "",
+      "desc_tokens": 71,
+      "body_tokens": 12829
+    },
+    {
+      "id": "c4",
+      "name": "crypto-charting",
+      "scope": "user",
+      "namespace": null,
+      "path": "/tmp/demo/crypto-charting",
+      "tokens": 9800,
+      "tokens_pct_budget": 4.9,
+      "invocations": 1,
+      "last_used": "2026-03-31",
+      "days_since_use": 89,
+      "verdict": {
+        "score": 88.0,
+        "label": "Heavy, barely touched",
+        "tone": "bad"
+      },
+      "description": "Render candlestick and indicator charts for crypto pairs. Pulls OHLCV data, computes RSI/MACD, and exports PNG.",
+      "decision": "",
+      "desc_tokens": 49,
+      "body_tokens": 9751
+    },
+    {
+      "id": "c5",
+      "name": "terraform-modules",
+      "scope": "user",
+      "namespace": null,
+      "path": "/tmp/demo/terraform-modules",
+      "tokens": 8200,
+      "tokens_pct_budget": 4.1,
+      "invocations": 0,
+      "last_used": "never",
+      "days_since_use": null,
+      "verdict": {
+        "score": 81.0,
+        "label": "Heavy + unused \u2014 likely dead weight",
+        "tone": "bad"
+      },
+      "description": "Scaffold reusable Terraform modules for AWS VPC, EKS, and RDS with sensible defaults and variable validation.",
+      "decision": "",
+      "desc_tokens": 55,
+      "body_tokens": 8145
+    },
+    {
+      "id": "c6",
+      "name": "old-blog-formatter",
+      "scope": "user",
+      "namespace": null,
+      "path": "/tmp/demo/old-blog-formatter",
+      "tokens": 6100,
+      "tokens_pct_budget": 3.1,
+      "invocations": 0,
+      "last_used": "never",
+      "days_since_use": null,
+      "verdict": {
+        "score": 64.0,
+        "label": "Unused, mid-weight",
+        "tone": "warn"
+      },
+      "description": "Reformat markdown blog posts: fix heading levels, normalize frontmatter, and rewrite relative image paths.",
+      "decision": "",
+      "desc_tokens": 38,
+      "body_tokens": 6062
+    },
+    {
+      "id": "c7",
+      "name": "dad-jokes",
+      "scope": "user",
+      "namespace": null,
+      "path": "/tmp/demo/dad-jokes",
+      "tokens": 1200,
+      "tokens_pct_budget": 0.6,
+      "invocations": 0,
+      "last_used": "never",
+      "days_since_use": null,
+      "verdict": {
+        "score": 38.0,
+        "label": "Light, but never once used",
+        "tone": "warn"
+      },
+      "description": "Tell a dad joke on request. That's it. That's the skill.",
+      "decision": "",
+      "desc_tokens": 16,
+      "body_tokens": 1184
+    },
+    {
+      "id": "c8",
+      "name": "n8n-mcp:n8n-workflows",
+      "scope": "plugin",
+      "namespace": "n8n-mcp",
+      "path": "",
+      "tokens": 5400,
+      "tokens_pct_budget": 2.7,
+      "invocations": 14,
+      "last_used": "2026-06-26",
+      "days_since_use": 3,
+      "verdict": {
+        "score": 18.0,
+        "label": "Used recently \u2014 keep",
+        "tone": "good"
+      },
+      "description": "Build and design n8n automation workflows: node configs, webhook triggers, and proven architectural patterns.",
+      "decision": "",
+      "desc_tokens": 52,
+      "body_tokens": 5348
+    },
+    {
+      "id": "c9",
+      "name": "hyperframes",
+      "scope": "plugin",
+      "namespace": "hyperframes",
+      "path": "",
+      "tokens": 4800,
+      "tokens_pct_budget": 2.4,
+      "invocations": 11,
+      "last_used": "2026-06-25",
+      "days_since_use": 4,
+      "verdict": {
+        "score": 14.0,
+        "label": "Used recently \u2014 keep",
+        "tone": "good"
+      },
+      "description": "Create HTML+GSAP video compositions: captions, voiceovers, audio-reactive animation, and scene transitions.",
+      "decision": "",
+      "desc_tokens": 58,
+      "body_tokens": 4742
+    },
+    {
+      "id": "c10",
+      "name": "gsap",
+      "scope": "plugin",
+      "namespace": "hyperframes",
+      "path": "",
+      "tokens": 3100,
+      "tokens_pct_budget": 1.6,
+      "invocations": 9,
+      "last_used": "2026-06-24",
+      "days_since_use": 5,
+      "verdict": {
+        "score": 12.0,
+        "label": "Used recently \u2014 keep",
+        "tone": "good"
+      },
+      "description": "GSAP animation reference: tweens, easing, stagger, timelines, and performance patterns.",
+      "decision": "",
+      "desc_tokens": 33,
+      "body_tokens": 3067
+    },
+    {
+      "id": "c11",
+      "name": "obsidian-sync",
+      "scope": "user",
+      "namespace": null,
+      "path": "/tmp/demo/obsidian-sync",
+      "tokens": 2300,
+      "tokens_pct_budget": 1.2,
+      "invocations": 31,
+      "last_used": "2026-06-28",
+      "days_since_use": 1,
+      "verdict": {
+        "score": 8.0,
+        "label": "Frequently used \u2014 keep",
+        "tone": "good"
+      },
+      "description": "Check what changed recently in a project and update the matching Obsidian note.",
+      "decision": "",
+      "desc_tokens": 29,
+      "body_tokens": 2271
+    },
+    {
+      "id": "c12",
+      "name": "postiz-send",
+      "scope": "user",
+      "namespace": null,
+      "path": "/tmp/demo/postiz-send",
+      "tokens": 1900,
+      "tokens_pct_budget": 1.0,
+      "invocations": 22,
+      "last_used": "2026-06-27",
+      "days_since_use": 2,
+      "verdict": {
+        "score": 6.0,
+        "label": "Frequently used \u2014 keep",
+        "tone": "good"
+      },
+      "description": "Post to social media via Postiz: create, schedule, and manage drafts across connected channels.",
+      "decision": "",
+      "desc_tokens": 41,
+      "body_tokens": 1859
+    }
+  ]
+}

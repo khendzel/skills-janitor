@@ -68,7 +68,7 @@ if [[ -z "$SKILL_FILE" || ! -f "$SKILL_FILE" ]]; then
 fi
 
 # --- Extract description ---
-SKILL_DESC=$(awk 'NR==1 && /^---$/{started=1; next} started && /^---$/{exit} started && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/"/,""); print}' "$SKILL_FILE")
+SKILL_DESC=$(extract_description "$SKILL_FILE")
 
 # --- Ensure data dir ---
 mkdir -p "$DATA_DIR"

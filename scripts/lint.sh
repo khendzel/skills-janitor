@@ -71,7 +71,7 @@ lint_skill() {
 
     # Check name field
     local name_field
-    name_field=$(echo "$frontmatter" | grep -E '^name:' | sed 's/^name:\s*//' | tr -d '"' | tr -d "'" | xargs 2>/dev/null || echo "")
+    name_field=$(echo "$frontmatter" | grep -E '^name:' | sed 's/^name:[[:space:]]*//' | tr -d '"' | tr -d "'" | xargs 2>/dev/null || echo "")
     if [[ -z "$name_field" ]]; then
         print_issue "warning" "$name" "Missing 'name' field in frontmatter"
     elif [[ "$(echo "$name_field" | tr '[:upper:]' '[:lower:]')" != "$(echo "$name" | tr '[:upper:]' '[:lower:]')" && "$(echo "$name_field" | tr ' ' '-' | tr '[:upper:]' '[:lower:]')" != "$(echo "$name" | tr '[:upper:]' '[:lower:]')" ]]; then
@@ -80,7 +80,7 @@ lint_skill() {
 
     # Check description field — supports both inline and block scalar (|, >)
     local desc_raw
-    desc_raw=$(echo "$frontmatter" | grep -E '^description:' | sed 's/^description:\s*//' | xargs 2>/dev/null || echo "")
+    desc_raw=$(echo "$frontmatter" | grep -E '^description:' | sed 's/^description:[[:space:]]*//' | xargs 2>/dev/null || echo "")
 
     local desc
     if [[ -z "$desc_raw" || "$desc_raw" == "|" || "$desc_raw" == ">" ]]; then
@@ -113,7 +113,7 @@ lint_skill() {
 
         # Check disable-model-invocation: auto-loaded skills need a meaningful description
         local dmi
-        dmi=$(echo "$frontmatter" | grep -E '^disable-model-invocation:' | sed 's/^disable-model-invocation:\s*//' | xargs 2>/dev/null || echo "")
+        dmi=$(echo "$frontmatter" | grep -E '^disable-model-invocation:' | sed 's/^disable-model-invocation:[[:space:]]*//' | xargs 2>/dev/null || echo "")
         if [[ "$dmi" == "true" && $desc_len -lt 50 ]]; then
             print_issue "warning" "$name" "Skill uses disable-model-invocation but description is very short — Claude may not trigger it correctly"
         fi
@@ -146,8 +146,8 @@ echo ""
 
 echo "--- User Skills ($USER_SKILLS) ---"
 if [[ -d "$USER_SKILLS" ]]; then
-    for skill_dir in "$USER_SKILLS"/*/; do
-        [[ -d "$skill_dir" ]] || continue
+    for skill_dir in "$USER_SKILLS"/*; do
+        [[ -d "$skill_dir" || -L "$skill_dir" ]] || continue
         lint_skill "${skill_dir%/}" "user"
     done
 fi
@@ -158,8 +158,8 @@ PROJECT_REAL=$(cd "$PROJECT_SKILLS" 2>/dev/null && pwd -P || echo "")
 if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
     echo ""
     echo "--- Project Skills ($PROJECT_SKILLS) ---"
-    for skill_dir in "$PROJECT_SKILLS"/*/; do
-        [[ -d "$skill_dir" ]] || continue
+    for skill_dir in "$PROJECT_SKILLS"/*; do
+        [[ -d "$skill_dir" || -L "$skill_dir" ]] || continue
         lint_skill "${skill_dir%/}" "project"
     done
 fi
@@ -168,8 +168,8 @@ fi
 if [[ -d "$CODEX_USER_SKILLS" ]]; then
     echo ""
     echo "--- Codex User Skills ($CODEX_USER_SKILLS) ---"
-    for skill_dir in "$CODEX_USER_SKILLS"/*/; do
-        [[ -d "$skill_dir" ]] || continue
+    for skill_dir in "$CODEX_USER_SKILLS"/*; do
+        [[ -d "$skill_dir" || -L "$skill_dir" ]] || continue
         lint_skill "${skill_dir%/}" "codex-user"
     done
 fi
@@ -179,8 +179,8 @@ if [[ -d "$CODEX_PROJECT_SKILLS" ]]; then
     if [[ "$CODEX_P_REAL" != "$CODEX_U_REAL" ]]; then
         echo ""
         echo "--- Codex Project Skills ($CODEX_PROJECT_SKILLS) ---"
-        for skill_dir in "$CODEX_PROJECT_SKILLS"/*/; do
-            [[ -d "$skill_dir" ]] || continue
+        for skill_dir in "$CODEX_PROJECT_SKILLS"/*; do
+            [[ -d "$skill_dir" || -L "$skill_dir" ]] || continue
             lint_skill "${skill_dir%/}" "codex-project"
         done
     fi

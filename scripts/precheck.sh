@@ -51,7 +51,7 @@ trap "rm -f $TMPFILE $TMPFILE.new" EXIT
 extract_skills() {
     local dir="$1"
     local scope="$2"
-    [[ -d "$dir" ]] || return
+    [[ -d "$dir" ]] || return 0
 
     for skill_dir in "$dir"/*/; do
         [[ -d "$skill_dir" ]] || continue
@@ -66,7 +66,7 @@ extract_skills() {
         [[ ! -e "$skill_file" ]] && continue
 
         local desc
-        desc=$(awk 'NR==1 && /^---$/{started=1; next} started && /^---$/{exit} started && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/"/,""); print}' "$skill_file" | tr '[:upper:]' '[:lower:]')
+        desc=$(extract_description "$skill_file" | tr '[:upper:]' '[:lower:]')
 
         printf '%s\t%s\t%s\n' "$scope" "$name" "$desc" >> "$TMPFILE"
     done
@@ -109,12 +109,14 @@ if [[ "$SOURCE" == http* ]]; then
         # If not found at root, try to find via GitHub API
         if [[ -z "$NEW_SKILL_CONTENT" ]]; then
             GITHUB_TOKEN="${GITHUB_TOKEN:-}"
-            AUTH_HEADER=""
-            [[ -n "$GITHUB_TOKEN" ]] && AUTH_HEADER="-H \"Authorization: token $GITHUB_TOKEN\""
+            # Array, not a quoted string: the old form passed `-H "Authorization: ..."`
+            # as ONE argument with literal quotes, sending a garbage header.
+            AUTH_ARGS=()
+            [[ -n "$GITHUB_TOKEN" ]] && AUTH_ARGS=(-H "Authorization: token $GITHUB_TOKEN")
 
             # Search for SKILL.md in the repo
             API_URL="https://api.github.com/search/code?q=filename:SKILL.md+repo:$REPO_PATH"
-            SEARCH_RESULT=$(curl -sL -f -H "Accept: application/vnd.github.v3+json" -H "User-Agent: skills-janitor" ${AUTH_HEADER:+"$AUTH_HEADER"} "$API_URL" 2>/dev/null || true)
+            SEARCH_RESULT=$(curl -sL -f -H "Accept: application/vnd.github.v3+json" -H "User-Agent: skills-janitor/1.5.0" ${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"} "$API_URL" 2>/dev/null || true)
 
             if [[ -n "$SEARCH_RESULT" ]]; then
                 FIRST_PATH=$(echo "$SEARCH_RESULT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['items'][0]['path'] if d.get('items') else '')" 2>/dev/null || true)

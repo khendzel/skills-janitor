@@ -12,7 +12,9 @@ source "$(dirname "$0")/paths.sh"
 
 USER_SKILLS="$CLAUDE_USER_SKILLS"
 PROJECT_SKILLS="$CLAUDE_PROJECT_SKILLS"
-DATA_DIR="$HOME/.claude/skills/skills-janitor/data"
+# Same data dir as usage/tokencost/search (previously this wrote into
+# ~/.claude/skills/skills-janitor/data, creating a fake skill directory).
+DATA_DIR="$(cd "$(dirname "$0")/.." && pwd)/data"
 CHANGELOG="$DATA_DIR/changelog.log"
 
 DRY_RUN=true
@@ -109,9 +111,19 @@ $new_content"
         local has_close
         has_close=$(awk 'NR>1 && /^---$/{print "yes"; exit}' "$skill_file")
         if [[ -z "$has_close" ]]; then
-            # Find end of frontmatter-like content
+            # Find end of the LEADING frontmatter run only. The old version
+            # scanned the whole file for `key:` lines, so a body line like
+            # `usage: run the tool` pushed the closing --- past the body,
+            # swallowing everything above it into frontmatter.
             local insert_after
-            insert_after=$(awk 'NR==1{next} /^[a-z_]+:/{last=NR} END{print last}' "$skill_file")
+            insert_after=$(awk '
+                NR==1 {next}
+                /^[a-zA-Z_-]+:/ {last=NR; next}
+                /^[[:space:]]+[^[:space:]]/ {next}
+                /^[[:space:]]*$/ {next}
+                {exit}
+                END {if (last) print last}
+            ' "$skill_file")
             if [[ -n "$insert_after" ]]; then
                 # awk, not `sed Na\` — see BSD sed note in Fix 1
                 new_content=$(echo "$new_content" | awk -v n="$insert_after" 'NR==n {print; print "---"; next} {print}')
@@ -232,8 +244,8 @@ echo ""
 
 echo "--- User Skills ($USER_SKILLS) ---"
 if [[ -d "$USER_SKILLS" ]]; then
-    for skill_dir in "$USER_SKILLS"/*/; do
-        [[ -d "$skill_dir" ]] || continue
+    for skill_dir in "$USER_SKILLS"/*; do
+        [[ -d "$skill_dir" || -L "$skill_dir" ]] || continue
         fix_skill "${skill_dir%/}" "user"
     done
 fi
@@ -244,8 +256,8 @@ PROJECT_REAL=$(cd "$PROJECT_SKILLS" 2>/dev/null && pwd -P || echo "")
 if [[ -d "$PROJECT_SKILLS" && "$USER_REAL" != "$PROJECT_REAL" ]]; then
     echo ""
     echo "--- Project Skills ($PROJECT_SKILLS) ---"
-    for skill_dir in "$PROJECT_SKILLS"/*/; do
-        [[ -d "$skill_dir" ]] || continue
+    for skill_dir in "$PROJECT_SKILLS"/*; do
+        [[ -d "$skill_dir" || -L "$skill_dir" ]] || continue
         fix_skill "${skill_dir%/}" "project"
     done
 fi
@@ -254,8 +266,8 @@ fi
 if [[ -d "$CODEX_USER_SKILLS" ]]; then
     echo ""
     echo "--- Codex User Skills ($CODEX_USER_SKILLS) ---"
-    for skill_dir in "$CODEX_USER_SKILLS"/*/; do
-        [[ -d "$skill_dir" ]] || continue
+    for skill_dir in "$CODEX_USER_SKILLS"/*; do
+        [[ -d "$skill_dir" || -L "$skill_dir" ]] || continue
         fix_skill "${skill_dir%/}" "codex-user"
     done
 fi
@@ -265,8 +277,8 @@ if [[ -d "$CODEX_PROJECT_SKILLS" ]]; then
     if [[ "$CODEX_P_REAL" != "$CODEX_U_REAL" ]]; then
         echo ""
         echo "--- Codex Project Skills ($CODEX_PROJECT_SKILLS) ---"
-        for skill_dir in "$CODEX_PROJECT_SKILLS"/*/; do
-            [[ -d "$skill_dir" ]] || continue
+        for skill_dir in "$CODEX_PROJECT_SKILLS"/*; do
+            [[ -d "$skill_dir" || -L "$skill_dir" ]] || continue
             fix_skill "${skill_dir%/}" "codex-project"
         done
     fi
@@ -281,12 +293,15 @@ if [[ "$PRUNE" == "true" ]]; then
     prune_dir() {
         local dir="$1"
         local scope="$2"
-        [[ -d "$dir" ]] || return
+        [[ -d "$dir" ]] || return 0
 
-        for skill_dir in "$dir"/*/; do
-            [[ -d "$skill_dir" || -L "${skill_dir%/}" ]] || continue
+        # No trailing slash on the glob: `"$dir"/*/` only matches entries that
+        # RESOLVE to directories, so broken symlinks were invisible and the
+        # advertised "removes broken symlinks" never fired.
+        for skill_dir in "$dir"/*; do
+            [[ -d "$skill_dir" || -L "$skill_dir" ]] || continue
             local name
-            name=$(basename "${skill_dir%/}")
+            name=$(basename "$skill_dir")
             [[ "$name" == "skills-janitor" ]] && continue
 
             local path="${skill_dir%/}"

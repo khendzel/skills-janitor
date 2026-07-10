@@ -2,7 +2,7 @@
 name: janitor-fix
 description: "Automatically fix skill problems (safe preview first). Also use with --prune to find and remove broken symlinks, empty directories, and orphaned skills."
 metadata:
-  version: 1.3.0
+  version: 1.5.0
 ---
 
 # Auto-Fix
@@ -45,5 +45,4 @@ Dry-run by default. Pass `--apply` to actually remove them.
 ## Related Skills
 
 - For finding issues: `/janitor-report`
-- For usage analytics: `/janitor-usage`
-- For token cost: `/janitor-tokens`
+- For usage + token cost: `/janitor-value`

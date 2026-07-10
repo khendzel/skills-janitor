@@ -16,7 +16,7 @@ Scans every place a skill lives: user, project, codex, and every skill installed
 |---|---|
 | `/janitor-report` | Health check: inventory, duplicates, broken skills. `--brief` for inventory only. |
 | `/janitor-fix` | Auto-fix issues. `--prune` removes broken symlinks and empty dirs. |
-| `/janitor-value` | Combined token + usage view, sorted by waste. |
+| `/janitor-value` | Honest token costs (always-loaded descriptions vs on-demand bodies) + usage, skills and subagents. |
 | `/janitor-discover` | Search GitHub for skills, or check a URL before installing. |
 | `/janitor-swipe` | Interactive TUI — swipe keep/delete/skip on every installed skill, sorted most-likely-waste first. (v1.4+) |
 
@@ -27,6 +27,12 @@ Each has its own slash command. Or use natural language: *"check my skills"*, *"
 ```
 /plugin marketplace add khendzel/skills-janitor
 /plugin install skills-janitor
+```
+
+Or via [skills.sh](https://skills.sh):
+
+```bash
+npx skills add khendzel/skills-janitor
 ```
 
 Or clone directly:
@@ -69,7 +75,7 @@ If you installed a plugin that re-implements a skill you already had standalone,
 
 ## v1.2 → v1.3 migration
 
-The five v1.2 commands keep working as deprecated aliases until v1.4. Renames:
+The five v1.2 aliases were removed in v1.5. Renames:
 
 | v1.2 | v1.3 |
 |---|---|
