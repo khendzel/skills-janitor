@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.1 (2026-07-11)
+
+Docs-only release: every SKILL.md now follows the emerging marketplace schema (8 frontmatter fields incl. `allowed-tools`/`license`/`compatibility`, plus Overview/Prerequisites/Instructions/Output/Error Handling/Examples/Resources sections). All five skills grade A (93-94/100, 0 errors) on the tonsofskills marketplace validator. Operative instructions are unchanged; descriptions gained only an additive "Trigger with '/command'." sentence.
+
 ## v1.5.0 (2026-07-09)
 
 ### Honest token costs — always-loaded vs on-demand
