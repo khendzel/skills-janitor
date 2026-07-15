@@ -2,7 +2,7 @@
 
 > Tinder for your Claude Code skills. Swipe through your collection and delete what's wasting context, in seconds.
 
-Works with **Claude Code** and **OpenAI Codex**. 5 commands, zero dependencies.
+Works with **Claude Code** and **OpenAI Codex**. 6 commands, zero dependencies.
 
 ![/janitor-swipe — swipe keep / delete / skip through every installed skill](janitor-swipe-demo.gif)
 
@@ -17,7 +17,8 @@ Scans every place a skill lives: user, project, codex, and every skill installed
 | `/janitor-report` | Health check: inventory, duplicates, broken skills. `--brief` for inventory only. |
 | `/janitor-fix` | Auto-fix issues. `--prune` removes broken symlinks and empty dirs. |
 | `/janitor-value` | Honest token costs (always-loaded descriptions vs on-demand bodies) + usage, skills and subagents. |
-| `/janitor-discover` | Search GitHub for skills, or check a URL before installing. |
+| `/janitor-security` | Heuristic scan for prompt injection, hidden instructions, and dangerous script patterns. (v1.6+) |
+| `/janitor-discover` | Search GitHub for skills, or check a URL before installing — now including a pre-install security scan. |
 | `/janitor-swipe` | Interactive TUI — swipe keep/delete/skip on every installed skill, sorted most-likely-waste first. (v1.4+) |
 
 Each has its own slash command. Or use natural language: *"check my skills"*, *"which skills are wasting context?"*, *"find an n8n skill"*.
@@ -40,6 +41,17 @@ Or clone directly:
 ```bash
 git clone https://github.com/khendzel/skills-janitor ~/.claude/skills/skills-janitor
 ```
+
+## Security scan (v1.6)
+
+A skill is text your agent trusts. Public research found prompt injection in roughly a third of tested community skills — so the janitor now scans for the known bad shapes: instruction-override phrases, "don't tell the user" directives, instructions hidden in HTML comments or zero-width unicode, smuggled base64 payloads, and scripts that pipe the network into a shell or read credential stores.
+
+```
+/janitor-security          # audit everything installed
+/janitor-discover <url>    # overlap + security check BEFORE installing
+```
+
+Verdicts are honest heuristics (PASS / REVIEW / RISK): a RISK means "read this before trusting it", not "malware". Calibrated for low noise — on a real 178-skill machine it flags 2, both genuinely worth reading.
 
 ## Swipe through your skills (v1.4)
 

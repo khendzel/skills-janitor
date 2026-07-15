@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.6.0 (2026-07-15)
+
+### `/janitor-security` — prompt-injection and malicious-pattern scan
+
+New command that audits every installed skill (all scopes) for the shapes found in real-world malicious skills: instruction-override phrases ("ignore all previous instructions"), hide-from-the-user directives, instructions concealed in HTML comments or zero-width/bidi unicode, large decodable base64 blobs, and scripts that pipe the network into a shell, decode-and-execute, touch credential stores (`~/.ssh`, `~/.aws`, keychain), call URL shorteners or plain-HTTP endpoints, or upload variable data.
+
+Verdicts are per-skill heuristics — PASS / REVIEW / RISK — with file + evidence for every finding. Calibrated for low noise: legitimate emoji ZWJ sequences, "secretly" as prose, and benign HTML comments don't trip it (on a real 178-skill machine: 2 flagged, both genuinely worth reading).
+
+### Pre-install security in `/janitor-discover`
+
+`precheck` now runs the same scan on the candidate: full-directory scan for local paths (including bundled scripts), fetched-SKILL.md scan for URLs (with an explicit note that scripts aren't fetched — re-check after cloning).
+
+### Fixed
+
+- `precheck` with a `github.com/.../tree/<branch>/<path>` URL computed the raw URL but never downloaded it, so every tree-style precheck failed with "Could not fetch SKILL.md" — a format the help text has advertised since v1.0.
+
 ## v1.5.1 (2026-07-11)
 
 Docs-only release: every SKILL.md now follows the emerging marketplace schema (8 frontmatter fields incl. `allowed-tools`/`license`/`compatibility`, plus Overview/Prerequisites/Instructions/Output/Error Handling/Examples/Resources sections). All five skills grade A (93-94/100, 0 errors) on the tonsofskills marketplace validator. Operative instructions are unchanged; descriptions gained only an additive "Trigger with '/command'." sentence.
