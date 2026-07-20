@@ -8,7 +8,7 @@ Works with **Claude Code** and **OpenAI Codex**. 6 commands, zero dependencies.
 
 > **New in v1.4: `/janitor-swipe`.** Every installed skill becomes a card, sorted heaviest-and-least-used first. Swipe left to delete, right to keep, down to skip. Most setups clear 30–40% of their skill token cost before the deck even ends. [Jump to swipe →](#swipe-through-your-skills-v14)
 
-Scans every place a skill lives: user, project, codex, and every skill installed via `/plugin install`. Surfaces duplicates, broken symlinks, and unused skills cluttering your context.
+Scans every place a skill lives: user, project, codex, and every skill installed via `/plugin install` — plus your subagents and MCP servers. Surfaces duplicates, broken symlinks, unused skills, and connected-but-never-called MCP servers cluttering your context. Usage counts come from real session transcripts, including skills Claude auto-triggered.
 
 ## Commands
 
@@ -19,7 +19,7 @@ Scans every place a skill lives: user, project, codex, and every skill installed
 | `/janitor-value` | Honest token costs (always-loaded descriptions vs on-demand bodies) + usage, skills and subagents. |
 | `/janitor-security` | Heuristic scan for prompt injection, hidden instructions, and dangerous script patterns. (v1.6+) |
 | `/janitor-discover` | Search GitHub for skills, or check a URL before installing — now including a pre-install security scan. |
-| `/janitor-swipe` | Interactive TUI — swipe keep/delete/skip on every installed skill, sorted most-likely-waste first. (v1.4+) |
+| `/janitor-swipe` | Interactive TUI — swipe keep/delete/skip through skills AND MCP servers, sorted most-likely-waste first. (v1.4+) |
 
 Each has its own slash command. Or use natural language: *"check my skills"*, *"which skills are wasting context?"*, *"find an n8n skill"*.
 

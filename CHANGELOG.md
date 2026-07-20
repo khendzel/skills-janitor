@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.7.0 (2026-07-20)
+
+### MCP servers join the triage
+
+- **`scripts/mcp.sh`** — inventories every configured MCP server (user `~/.claude.json`, per-project entries, project `.mcp.json`, plugin-bundled) and cross-references REAL usage from session transcripts (`mcp__server__tool` tool_use records). No invented token numbers — schemas live server-side, so the janitor reports calls, distinct tools used, and last-used. Servers seen in transcripts but no longer configured are listed separately.
+- **Swipe deck includes MCP cards.** Unused connected servers rank high (their tool schemas load into context for nothing). Swiping one left removes the entry from its config file with a timestamped `.bak` backup — reversible. Plugin-bundled MCP servers are flagged for plugin review instead.
+
+### Usage tracking got real
+
+Skill usage now also counts actual `Skill` tool_use records from session transcripts — including skills Claude auto-triggered, which the slash-command history never sees. On a machine where the old heuristic found 1 active skill in 4 weeks, transcripts reveal 11.
+
+### Notes
+
+- Transcript scanning adds ~10-15s to `usage`/`value`/deck builds on large transcript trees (pre-filtered by grep and modification time).
+
 ## v1.6.0 (2026-07-15)
 
 ### `/janitor-security` — prompt-injection and malicious-pattern scan
