@@ -6,7 +6,7 @@ Works with **Claude Code** and **OpenAI Codex**. 6 commands, zero dependencies.
 
 ![/janitor-swipe — swipe keep / delete / skip through every installed skill](janitor-swipe-demo.gif)
 
-> **New in v1.4: `/janitor-swipe`.** Every installed skill becomes a card, sorted heaviest-and-least-used first. Swipe left to delete, right to keep, down to skip. Most setups clear 30–40% of their skill token cost before the deck even ends. [Jump to swipe →](#swipe-through-your-skills-v14)
+> **New in v1.7: MCP servers join the triage.** Every configured MCP server is inventoried and cross-referenced against real usage from your session transcripts. Connected-but-never-called servers rank high in the swipe deck — their tool schemas load into context on every request for nothing. Swiping one left removes it from its config file, with a timestamped `.bak`. [Jump to MCP triage →](#mcp-server-triage-v17)
 
 Scans every place a skill lives: user, project, codex, and every skill installed via `/plugin install` — plus your subagents and MCP servers. Surfaces duplicates, broken symlinks, unused skills, and connected-but-never-called MCP servers cluttering your context. Usage counts come from real session transcripts, including skills Claude auto-triggered.
 
@@ -67,9 +67,45 @@ Controls: `←` delete, `→` keep, `↓` skip, `u` undo, `i` inspect full descr
 
 Plugin skills are flagged for review (you can't `rm` individual plugin skills — they belong to a plugin). User-scope skills stage for actual deletion, applied on `y` confirmation at the end.
 
-## What v1.3 catches that v1.2 missed
+Since v1.7 the deck also includes your MCP servers — see [MCP server triage](#mcp-server-triage-v17).
 
-The duplicate detector now flags cross-scope overlaps that were invisible before:
+## MCP server triage (v1.7)
+
+Skills aren't the only thing renting space in your context. Every connected MCP server loads
+its tool schemas on every request, whether you call it or not.
+
+The janitor inventories every configured server — user `~/.claude.json`, per-project entries,
+project `.mcp.json`, and plugin-bundled — then cross-references real usage from your session
+transcripts (`mcp__server__tool` records):
+
+```
+=== Skills Janitor - MCP Servers ===
+Usage window: last 8 weeks of session transcripts
+
+  Server                       Scope         Calls  Tools Last Used   Origin
+  ──────────────────────────── ──────────── ────── ────── ─────────── ────────────
+  design-tool                  mcp-user          0      0 never       ~/.claude.json
+  deploy-tool                  mcp-plugin        0      0 never       plugin:deploy
+  cms                          mcp-project      41      4 2026-07-02  ~/.claude.json
+
+--- Unused in 8 weeks (2) ---
+  design-tool (mcp-user) — configured in ~/.claude.json
+  deploy-tool (mcp-plugin) — configured in plugin:deploy
+```
+
+No invented token numbers — MCP schemas live server-side, so the janitor reports only what it
+can prove: where the server is configured, how many distinct tools you actually called, how
+often, and when last. Servers seen in transcripts but no longer configured are listed
+separately.
+
+Unused servers rank high in the swipe deck. Swiping one left removes the entry from its config
+file with a timestamped `.bak` backup. Plugin-bundled servers are flagged for plugin review
+instead.
+
+## Duplicate detection
+
+The duplicate detector flags cross-scope overlaps, including plugins that re-implement a skill
+you already had standalone:
 
 ```
 === Skills Janitor - Duplicate Detection ===
@@ -83,13 +119,14 @@ The duplicate detector now flags cross-scope overlaps that were invisible before
         Scopes: user / plugin
 ```
 
-If you installed a plugin that re-implements a skill you already had standalone, v1.3 tells you. v1.2 couldn't, because it was blind to the plugin tree entirely.
+Overlap is scored on descriptions (Jaccard), so it catches re-implementations that share no
+filename and live in different scopes.
 
-## v1.2 → v1.3 migration
+## Upgrading from v1.2
 
 The five v1.2 aliases were removed in v1.5. Renames:
 
-| v1.2 | v1.3 |
+| v1.2 | now |
 |---|---|
 | `/janitor-audit` | `/janitor-report --brief` |
 | `/janitor-usage` | `/janitor-value` |
