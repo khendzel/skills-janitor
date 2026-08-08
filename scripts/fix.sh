@@ -87,7 +87,10 @@ fix_skill() {
 
     # Fix 1: Add missing opening frontmatter delimiter
     local first_line
-    first_line=$(head -1 "$skill_file")
+    # tr -d '\r': a CRLF file's first line is "---\r", which is a perfectly good
+    # opening delimiter. Comparing it raw made this branch fire on every CRLF
+    # skill and prepend a second "---" above the real one.
+    first_line=$(head -1 "$skill_file" | tr -d '\r')
     if [[ "$first_line" != "---" ]]; then
         # Check if it looks like frontmatter without delimiters (has name: or description:)
         if head -5 "$skill_file" | grep -qE '^(name|description|version):'; then
@@ -97,7 +100,7 @@ $new_content"
             # awk, not `sed Na\` — BSD sed glues the appended line onto the
             # following one (no trailing newline), corrupting the file.
             local fm_end
-            fm_end=$(echo "$new_content" | awk 'NR==1{next} NR>1 && !/^[a-z_]+:/ && !/^---$/ && !/^[[:space:]]*$/{print NR-1; exit}')
+            fm_end=$(echo "$new_content" | awk 'NR==1{next} NR>1 && !/^[a-z_]+:/ && !/^---\r?$/ && !/^[[:space:]]*$/{print NR-1; exit}')
             if [[ -n "$fm_end" && "$fm_end" -gt 1 ]]; then
                 new_content=$(echo "$new_content" | awk -v n="$fm_end" 'NR==n {print; print "---"; next} {print}')
             fi
@@ -109,7 +112,7 @@ $new_content"
     # Fix 2: Add missing closing frontmatter delimiter
     if head -1 "$skill_file" | grep -q '^---'; then
         local has_close
-        has_close=$(awk 'NR>1 && /^---$/{print "yes"; exit}' "$skill_file")
+        has_close=$(awk 'NR>1 && /^---\r?$/{print "yes"; exit}' "$skill_file")
         if [[ -z "$has_close" ]]; then
             # Find end of the LEADING frontmatter run only. The old version
             # scanned the whole file for `key:` lines, so a body line like
@@ -137,7 +140,7 @@ $new_content"
     # Re-parse after potential delimiter fixes
     if echo "$new_content" | head -1 | grep -q '^---'; then
         local frontmatter
-        frontmatter=$(echo "$new_content" | awk 'NR==1 && /^---$/{next} /^---$/{exit} {print}')
+        frontmatter=$(echo "$new_content" | awk 'NR==1 && /^---\r?$/{next} /^---\r?$/{exit} {print}')
 
         local has_desc
         if echo "$frontmatter" | grep -q '^description:' 2>/dev/null; then has_desc=1; else has_desc=0; fi
@@ -157,7 +160,7 @@ $new_content"
             if echo "$frontmatter" | grep -q '^name:' 2>/dev/null; then has_name=1; else has_name=0; fi
             if [[ "$has_name" -gt 0 ]]; then
                 new_content=$(echo "$new_content" | awk -v tmpl="$desc_template" '
-                    NR>1 && /^---$/ { fm_done=1 }
+                    NR>1 && /^---\r?$/ { fm_done=1 }
                     !fm_done && !ins && /^name:/ { print; print tmpl; ins=1; next }
                     { print }
                 ')
@@ -176,7 +179,7 @@ $new_content"
             if [[ -z "$desc_value" ]]; then
                 # Replace only the first frontmatter description line
                 new_content=$(echo "$new_content" | awk -v tmpl="$desc_template" '
-                    NR>1 && /^---$/ { fm_done=1 }
+                    NR>1 && /^---\r?$/ { fm_done=1 }
                     !fm_done && !rep && /^description:/ { print tmpl; rep=1; next }
                     { print }
                 ')

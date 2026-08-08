@@ -82,15 +82,20 @@ scan_skill() {
         if head -1 "$skill_file" | grep -q '^---'; then
             has_frontmatter="true"
             local frontmatter
-            frontmatter=$(awk 'NR==1 && /^---$/{next} /^---$/{exit} {print}' "$skill_file")
-            name_field=$(echo "$frontmatter" | grep -E '^name:' | head -1 | sed 's/^name:[[:space:]]*//' | tr -d '"' || true)
+            frontmatter=$(awk 'NR==1 && /^---\r?$/{next} /^---\r?$/{exit} {print}' "$skill_file")
+            # tr -d '\r' is load-bearing, not cosmetic: these values are written
+            # into a TSV that python reads with universal newlines, where a bare
+            # CR terminates a line. A CRLF skill's "name: foo\r" split its row in
+            # two, both halves failed read_tsv's field-count check, and the skill
+            # vanished from the inventory with no error.
+            name_field=$(echo "$frontmatter" | grep -E '^name:' | head -1 | sed 's/^name:[[:space:]]*//' | tr -d '"' | tr -d '\r' || true)
             # Shared helper handles block scalars (|, >) that a plain grep misses
             description=$(extract_description "$skill_file")
-            version=$(echo "$frontmatter" | grep -E '^version:' | head -1 | sed 's/^version:[[:space:]]*//' | tr -d '"' || true)
+            version=$(echo "$frontmatter" | grep -E '^version:' | head -1 | sed 's/^version:[[:space:]]*//' | tr -d '"' | tr -d '\r' || true)
         fi
 
         local body_start
-        body_start=$(awk '/^---$/{c++; if(c==2){print NR; exit}}' "$skill_file" 2>/dev/null || echo "0")
+        body_start=$(awk '/^---\r?$/{c++; if(c==2){print NR; exit}}' "$skill_file" 2>/dev/null || echo "0")
         if [[ "${body_start:-0}" -gt 0 ]]; then
             local remaining
             # `|| true`, not `|| echo 0` — grep -c already prints "0" when it
@@ -145,7 +150,7 @@ scan_agent() {
     agent_name=$(basename "$file" .md)
     # Shared helper: handles block-scalar descriptions like the skill side
     description=$(extract_description "$file")
-    model=$(awk 'NR==1 && /^---$/{started=1; next} started && /^---$/{exit} started && /^model:/{sub(/^model:[[:space:]]*/,""); print; exit}' "$file" || true)
+    model=$(awk 'NR==1 && /^---\r?$/{started=1; next} started && /^---\r?$/{exit} started && /^model:/{sub(/^model:[[:space:]]*/,""); print; exit}' "$file" || true)
     word_count=$(wc -w < "$file" | tr -d ' ')
     printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
         "$(_f "$agent_name")" "$(_f "$scope")" "$(_f "$file")" \
@@ -210,10 +215,14 @@ def d(v):
     return "" if v == S else v
 
 def read_tsv(path, n_fields):
+    # newline="\n": with universal newlines a stray CR inside a field ends the
+    # line, splitting one record into two short ones that both fail the
+    # field-count check below — a whole skill disappears with no error. Writers
+    # strip CR at the source; this makes the reader safe regardless.
     rows = []
     if not path or not os.path.isfile(path):
         return rows
-    with open(path) as f:
+    with open(path, newline="\n") as f:
         for line in f:
             line = line.rstrip("\n")
             if not line:
