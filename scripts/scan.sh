@@ -15,6 +15,9 @@ command -v python3 &>/dev/null || { echo "ERROR: python3 required" >&2; exit 1; 
 # --- Load platform paths ---
 source "$(dirname "$0")/paths.sh"
 
+# Absolute path so the python pass can import tsv_reader.py regardless of cwd
+JANITOR_SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+
 USER_COMMANDS="$HOME/.claude/commands"
 PROJECT_COMMANDS="./.claude/commands"
 USER_AGENTS="$HOME/.claude/agents"
@@ -203,35 +206,20 @@ for_each_skill_dir _broken_iter
 
 # --- Render everything in ONE python pass ---
 export SKILLS_TSV AGENTS_TSV COMMANDS_TSV BROKEN_COUNT="$broken_count"
-export INSTALLED_PLUGINS_FILE
+export INSTALLED_PLUGINS_FILE JANITOR_SCRIPT_DIR
 export KNOWN_MARKETPLACES_FILE="$HOME/.claude/plugins/known_marketplaces.json"
+# Importing tsv_reader must not litter the (possibly read-only) install dir
+# with __pycache__
+export PYTHONDONTWRITEBYTECODE=1
 
 python3 <<'PYEOF'
-import json, os, subprocess
+import json, os, subprocess, sys
 from datetime import datetime, timezone
 
-S = "_"  # sentinel for empty fields
-def d(v):
-    return "" if v == S else v
-
-def read_tsv(path, n_fields):
-    # newline="\n": with universal newlines a stray CR inside a field ends the
-    # line, splitting one record into two short ones that both fail the
-    # field-count check below — a whole skill disappears with no error. Writers
-    # strip CR at the source; this makes the reader safe regardless.
-    rows = []
-    if not path or not os.path.isfile(path):
-        return rows
-    with open(path, newline="\n") as f:
-        for line in f:
-            line = line.rstrip("\n")
-            if not line:
-                continue
-            parts = line.split("\t")
-            if len(parts) != n_fields:
-                continue
-            rows.append([d(p) for p in parts])
-    return rows
+# The TSV reader lives in tsv_reader.py (same dir as this script) so tests can
+# import it directly; it keeps the newline="\n" pin against CR record-splitting.
+sys.path.insert(0, os.environ["JANITOR_SCRIPT_DIR"])
+from tsv_reader import read_tsv
 
 skills = []
 for r in read_tsv(os.environ.get("SKILLS_TSV", ""), 15):
