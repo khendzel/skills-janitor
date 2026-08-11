@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Audit, clean, secure and swipe-triage your Claude Code + Codex skills. Honest token costs, prompt-injection scan, usage tracking \u2014 and it actually deletes.",
-    "version": "1.7.0",
+    "version": "1.7.1",
     "repository": "https://github.com/khendzel/skills-janitor"
   },
   "plugins": [

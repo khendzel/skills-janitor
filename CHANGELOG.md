@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.7.1 (2026-08-11)
+
+Patch release: SKILL.md frontmatter parsing is now robust across lint, scan, and fix on real-world collections — CRLF files, apostrophes, and every YAML block-scalar header form. All four fixes contributed by [@lulzpid](https://github.com/lulzpid) (#7), found by running the janitor over a ~440-skill collection. Two of the four were silent data loss; if you ever distrusted a lint report or lost a skill from the inventory, upgrade.
+
+### Fixed
+
+- **Descriptions with an odd number of apostrophes no longer report CRITICAL "Missing 'description' field".** Lint trimmed values through `xargs`, which parses shell quoting and aborts on `the user's` or `Don't`; the failure was swallowed into a phantom finding. Trimming now uses `sed` character classes — apostrophes are just characters.
+- **Every YAML block-scalar header form is parsed** (`|`, `>`, with optional chomp indicator and indent digit: `|-`, `>+`, `>2`, `>-2`, …). `description: >-` — the most common form — was previously read as the literal two-character string `>-`, tripping "too short" and "doesn't explain when to trigger".
+- **CRLF SKILL.md files no longer vanish from the scan inventory.** A Windows-authored skill's trailing CR split its TSV row under universal newlines and both halves were silently dropped. CRLF tolerance is layered end-to-end: delimiter scans match `^---\r?$`, values are CR-stripped at the point of reading, and the TSV reader pins `newline="\n"` as the last line of defense.
+- **`fix --apply` no longer corrupts CRLF files.** The missing-opening-delimiter check compared the raw first line, so a valid `---\r` opener triggered the corrupting path: a duplicate `---` prepended and the real description overwritten with a placeholder. The check now compares CR-stripped; only intended fixes fire.
+
+### Added
+
+- **Regression test harness under `tests/`** — plain bash, no framework, green on macOS bash 3.2. Seam 1 runs the lint/scan/fix CLIs whole under a fixture `$HOME` pinning all four failure modes (including byte-identity after `fix --apply` on a CRLF file); seam 2 tests `extract_description` and the TSV reader per-function.
+- **`scripts/tsv_reader.py`** — the scan module's TSV reader extracted into a standalone, importable helper (scan output unchanged).
+
 ## v1.7.0 (2026-07-20)
 
 ### MCP servers join the triage
