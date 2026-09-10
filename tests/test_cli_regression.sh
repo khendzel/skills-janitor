@@ -10,6 +10,12 @@
 #           two-character string ">-"
 #   crlf  - fully CRLF file: once missing from the scan inventory entirely,
 #           reported as broken frontmatter, and corrupted by `fix --apply`
+#   blocky - folded block scalar (`description: >`) whose text sits on the
+#           following indented lines: `fix --apply` once spliced the metadata
+#           addition directly after the header, which ended the scalar early
+#           and left frontmatter that no longer parsed as YAML
+#   victim - skill dir that is a symlink: `fix --apply` once followed it and
+#           wrote into the target, which may be a plugin clone or a user repo
 #
 # Tests observe external behavior only: lint stdout, scan JSON, and file bytes
 # after `fix --apply`. No framework; must stay green on macOS bash 3.2.
@@ -173,6 +179,83 @@ if grep -q '^metadata:$' "$CRLF_FIXED" && grep -q '^  version: "1.0.0"$' "$CRLF_
     pass "intended metadata.version addition is present"
 else
     fail "expected metadata.version addition not found"
+fi
+
+# --- Fix --apply: block-scalar description survives -------------------------
+# Fix 4 anchored on `^description:`, but that grep also matches the
+# `description: >` header. Splicing `metadata:` straight after it ended the
+# scalar at that point, so the real description lines became a continuation of
+# `version:` and the frontmatter stopped parsing. fix.sh logged a fix and
+# exited 0 either way, which is what kept this quiet.
+echo "fix --apply: block-scalar description is not swallowed by the metadata addition"
+BLOCK_ORIG="$TMP/block-orig.md"
+cat > "$BLOCK_ORIG" <<'EOF'
+---
+name: blocky
+description: >
+  A folded description that spans several
+  indented lines and has to survive intact.
+---
+# Blocky
+
+Exercises the folded block-scalar header.
+
+## Steps
+
+1. Read the file.
+2. Apply the fix.
+3. Compare bytes.
+EOF
+BLOCK_HOME="$TMP/blockhome"
+mkdir -p "$BLOCK_HOME/.claude/skills/blocky"
+cp "$BLOCK_ORIG" "$BLOCK_HOME/.claude/skills/blocky/SKILL.md"
+HOME="$BLOCK_HOME" bash "$REPO_DIR/scripts/fix.sh" --apply > "$TMP/block.out" 2>&1
+sed -e '/^metadata:$/d' -e '/^  version: "1.0.0"$/d' \
+    "$BLOCK_HOME/.claude/skills/blocky/SKILL.md" > "$TMP/block-minus-metadata"
+if cmp -s "$TMP/block-minus-metadata" "$BLOCK_ORIG"; then
+    pass "block-scalar file is byte-identical apart from the metadata addition"
+else
+    fail "block-scalar description was modified"
+    diff <(cat -v "$BLOCK_ORIG") <(cat -v "$BLOCK_HOME/.claude/skills/blocky/SKILL.md") | sed 's/^/    | /'
+fi
+# Byte-identity alone does not pin this bug: the corrupting placement inserted
+# the very same two lines, just too early, so deleting them restores the
+# original either way. The position is what matters — the metadata block has to
+# land just before the closing delimiter, not inside the description.
+BLOCK_AFTER_META=$(awk '/^metadata:$/{getline; getline; print; exit}' \
+    "$BLOCK_HOME/.claude/skills/blocky/SKILL.md")
+if [ "$BLOCK_AFTER_META" = "---" ]; then
+    pass "metadata block sits directly before the closing delimiter"
+else
+    fail "metadata block is misplaced — line after it is '$BLOCK_AFTER_META'"
+    sed 's/^/    | /' "$BLOCK_HOME/.claude/skills/blocky/SKILL.md"
+fi
+
+# --- Fix --apply: symlinked skill dir is skipped ----------------------------
+echo "fix --apply: symlinked skill dir is skipped, not written through"
+LINK_HOME="$TMP/linkhome"
+mkdir -p "$LINK_HOME/.claude/skills" "$LINK_HOME/outside/victim"
+cat > "$LINK_HOME/outside/victim/SKILL.md" <<'EOF'
+---
+name: victim
+description: Inline description the symlink target must keep untouched.
+---
+# Victim
+EOF
+cp "$LINK_HOME/outside/victim/SKILL.md" "$TMP/victim-orig.md"
+ln -s "$LINK_HOME/outside/victim" "$LINK_HOME/.claude/skills/victim"
+LINK_OUT=$(HOME="$LINK_HOME" bash "$REPO_DIR/scripts/fix.sh" --apply 2>&1)
+if cmp -s "$TMP/victim-orig.md" "$LINK_HOME/outside/victim/SKILL.md"; then
+    pass "symlink target was not written through"
+else
+    fail "fix.sh wrote through the symlink into the target"
+    diff <(cat -v "$TMP/victim-orig.md") <(cat -v "$LINK_HOME/outside/victim/SKILL.md") | sed 's/^/    | /'
+fi
+if printf '%s\n' "$LINK_OUT" | grep -q 'symlink ->'; then
+    pass "skipped symlink is reported with its target"
+else
+    fail "no skip line naming the symlinked skill"
+    printf '%s\n' "$LINK_OUT" | sed 's/^/    | /'
 fi
 
 # --- Summary ----------------------------------------------------------------
