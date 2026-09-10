@@ -62,6 +62,16 @@ fix_skill() {
         return
     fi
 
+    # Any other symlink resolves outside this scan root - to a plugin
+    # marketplace clone, the codex dir, or a user repo. The "/plugins/" check
+    # below inspects this path string only, so it never sees the real target
+    # and writing would dirty the upstream source instead.
+    if [[ -L "$path" ]]; then
+        echo "  [SKIP]    $name: symlink -> $(readlink "$path") - edit at source"
+        ((SKIPPED++)) || true
+        return
+    fi
+
     # Find skill file
     local skill_file=""
     [[ -f "$path/SKILL.md" ]] && skill_file="$path/SKILL.md"
@@ -208,21 +218,30 @@ $new_content"
             # Surface this for manual review instead of attempting a fix.
             log_change "$name" "metadata: block exists but version missing — add 'version: \"1.0.0\"' under it manually"
         elif [[ "$has_version" -eq 0 ]]; then
-            # No version anywhere — inject the canonical nested form via awk.
+            # Insert before the frontmatter's closing `---` rather than after a
+            # named key. `description: >` and `description: |` are block-scalar
+            # headers: splicing a new key directly after one ends the scalar
+            # early, so the original description lines fold into the injected
+            # mapping and the frontmatter stops being valid YAML.
             # awk is used instead of `sed a\` because BSD sed (macOS) does not
             # insert a trailing newline after the appended block, which makes
             # the following line (typically `---`) collide with the inserted text.
-            local anchor=""
-            if echo "$new_content" | grep -q '^description:'; then
-                anchor="description:"
-            elif echo "$new_content" | grep -q '^name:'; then
-                anchor="name:"
-            fi
-            if [[ -n "$anchor" ]]; then
-                new_content=$(echo "$new_content" | awk -v a="^$anchor" '
-                    $0 ~ a && !done { print; print "metadata:"; print "  version: \"1.0.0\""; done=1; next }
-                    { print }
-                ')
+            # [[:space:]]* rather than a bare $ so the delimiter is still found
+            # in a CRLF file, where the line reads `---\r`. CR is in the POSIX
+            # space class, so this matches LF and CRLF alike.
+            local patched
+            patched=$(echo "$new_content" | awk '
+                NR > 1 && /^---[[:space:]]*$/ && !done {
+                    print "metadata:"
+                    print "  version: \"1.0.0\""
+                    done = 1
+                }
+                { print }
+            ')
+            # No closing delimiter (Fix 2 could not locate one) leaves the
+            # content untouched; only report a fix when something changed.
+            if [[ "$patched" != "$new_content" ]]; then
+                new_content="$patched"
                 modified=true
                 log_change "$name" "Added missing metadata.version field (1.0.0)"
             fi
