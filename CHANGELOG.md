@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.8.0 (2026-09-30)
+
+Final feature release: the project moves to maintenance mode. Claude Code now covers the core use case natively: `/skill-doctor` (per-skill context cost and usage, never-invoked skills), `/doctor` (unused skills, MCP servers and plugins against their context cost, with fixes) and `/doctor prompt-audit` (outdated or conflicting instructions in CLAUDE.md, skills, agents and commands). If you only use Claude Code and only want to trim context, use those.
+
+The janitor stays for what still isn't built in: the security scan, the pre-install check, duplicate detection, Codex support and hard deletes. Bug fixes and PRs are still welcome.
+
+### Fixed
+
+Both contributed by [@jerryhuangzq-lang](https://github.com/jerryhuangzq-lang) (#9). Both logged `[FIXED]` and exited 0, so the damage only showed up in the written file.
+
+- **`fix --apply` no longer corrupts block-scalar frontmatter.** The missing-`metadata.version` fix anchored on `^description:`, which also matches the `description: >` / `description: |` header, and spliced the new block straight after it. That ended the scalar early and left frontmatter that no longer parsed as YAML. The block is now inserted just before the closing `---` (LF and CRLF). When no closing delimiter is found, the file is left alone instead of reporting a fix that didn't happen.
+- **`fix --apply` no longer writes through symlinked skill dirs.** The plugin guard only inspected the path string, so a symlink into a plugin marketplace clone, `~/.agents/skills` or a personal repo was followed and its target edited. Symlinked skills are now skipped with `[SKIP] name: symlink -> target - edit at source`.
+- Regression tests for both (`blocky`, `victim`) in `tests/test_cli_regression.sh`. The block-scalar test asserts position as well as bytes, because the broken placement inserted the same two lines and would have passed a byte-identity check.
+
+### Changed
+
+- README leads with the maintenance-mode status and points to the built-in Claude Code commands.
+- Marketplace description refreshed to match the GitHub About text.
+
 ## v1.7.1 (2026-08-11)
 
 Patch release: SKILL.md frontmatter parsing is now robust across lint, scan, and fix on real-world collections — CRLF files, apostrophes, and every YAML block-scalar header form. All four fixes contributed by [@lulzpid](https://github.com/lulzpid) (#7), found by running the janitor over a ~440-skill collection. Two of the four were silent data loss; if you ever distrusted a lint report or lost a skill from the inventory, upgrade.
