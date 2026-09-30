@@ -6,7 +6,20 @@ Works with **Claude Code** and **OpenAI Codex**. 6 commands, zero dependencies.
 
 ![/janitor-swipe — swipe keep / delete / skip through every installed skill](janitor-swipe-demo.gif)
 
-> **New in v1.7: MCP servers join the triage.** Every configured MCP server is inventoried and cross-referenced against real usage from your session transcripts. Connected-but-never-called servers rank high in the swipe deck — their tool schemas load into context on every request for nothing. Swiping one left removes it from its config file, with a timestamped `.bak`. [Jump to MCP triage →](#mcp-server-triage-v17)
+> **Status (v1.8, September 2026): maintenance mode. Claude Code now does the core of this natively.**
+>
+> When this project started, nothing in Claude Code told you which skills were eating your context. Now it does:
+>
+> - [`/skill-doctor`](https://code.claude.com/docs/en/skills#find-unused-skills) shows what each skill costs in context and how often it gets used, and flags the ones never invoked
+> - [`/doctor`](https://code.claude.com/docs/en/commands) finds unused skills, MCP servers and plugins against their context cost, and fixes them after asking
+> - `/doctor prompt-audit` audits your CLAUDE.md files, skills, agents and commands for outdated or conflicting instructions
+> - `/skills` sorts by token count (`t`) and hides a skill with `Space`
+>
+> If you only use Claude Code and only want to trim context, use those. They see real usage from inside the harness, which a plugin never can.
+>
+> The janitor stays useful for what still isn't built in: **security scanning** ([`/janitor-security`](#security-scan-v16), plus a pre-install check in `/janitor-discover`), **duplicate detection** across skills, **OpenAI Codex** support, and **actually deleting** broken symlinks and dead skill folders. Bug fixes and PRs are still welcome. No new features are planned.
+>
+> Thanks to everyone who installed it, filed issues and sent fixes: #4 of the day on Product Hunt, 120+ stars, and PRs from [@nshonda](https://github.com/nshonda), [@lulzpid](https://github.com/lulzpid) and [@jerryhuangzq-lang](https://github.com/jerryhuangzq-lang). We were early, and now it's native. That's a good ending for a janitor.
 
 Scans every place a skill lives: user, project, codex, and every skill installed via `/plugin install` — plus your subagents and MCP servers. Surfaces duplicates, broken symlinks, unused skills, and connected-but-never-called MCP servers cluttering your context. Usage counts come from real session transcripts, including skills Claude auto-triggered.
 
