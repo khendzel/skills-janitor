@@ -111,9 +111,9 @@ lint_skill() {
 
         # Length check
         if [[ $desc_len -lt 30 ]]; then
-            print_issue "warning" "$name" "Description too short ($desc_len chars) - should be 50-200 for good triggering"
+            print_issue "warning" "$name" "Description too short ($desc_len chars) - should be at least 30 chars for good triggering"
         elif [[ $desc_len -gt 500 ]]; then
-            print_issue "info" "$name" "Description is long ($desc_len chars) - consider trimming to < 300"
+            print_issue "info" "$name" "Description is long ($desc_len chars) - consider trimming to 500 chars or fewer"
         fi
 
         # Trigger word check

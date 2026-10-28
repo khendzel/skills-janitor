@@ -258,6 +258,61 @@ else
     printf '%s\n' "$LINK_OUT" | sed 's/^/    | /'
 fi
 
+
+# --- Lint: length messages match the actual thresholds ---------------------
+echo "lint: length messages state the actual 30 / 500 thresholds"
+LEN_HOME="$TMP/lenhome"
+mkdir -p "$LEN_HOME/.claude/skills/shortskill" \
+         "$LEN_HOME/.claude/skills/mediumskill" \
+         "$LEN_HOME/.claude/skills/longskill"
+LEN_BODY='# Skill
+
+Body line one with content.
+
+## Steps
+
+1. Do it.
+2. Check it.
+
+## Gotchas
+
+- Watch out.
+'
+printf -- '---\nname: shortskill\ndescription: Use when short.\n---\n%s\n' "$LEN_BODY" > "$LEN_HOME/.claude/skills/shortskill/SKILL.md"
+MEDIUM_DESC="Use when the user asks for a medium length example that is intentionally written to be around three hundred and fifty characters long so that it sits between the short warning threshold and the long info threshold and should therefore produce no length warning at all in the current code."
+printf -- '---\nname: mediumskill\ndescription: %s\n---\n%s\n' "$MEDIUM_DESC" "$LEN_BODY" > "$LEN_HOME/.claude/skills/mediumskill/SKILL.md"
+LONG_DESC="Use when the user asks for a very long example. This sentence is repeated to push the description well past five hundred characters so the lint info note appears. This sentence is repeated to push the description well past five hundred characters so the lint info note appears. This sentence is repeated to push the description well past five hundred characters so the lint info note appears. This sentence is repeated to push the description well past five hundred characters so the lint info note appears."
+printf -- '---\nname: longskill\ndescription: %s\n---\n%s\n' "$LONG_DESC" "$LEN_BODY" > "$LEN_HOME/.claude/skills/longskill/SKILL.md"
+LEN_OUT=$(HOME="$LEN_HOME" bash "$REPO_DIR/scripts/lint.sh" 2>&1)
+if printf '%s\n' "$LEN_OUT" | grep -q 'should be at least 30 chars'; then
+    pass "short description message states the 30-char threshold"
+else
+    fail "short description message does not state the 30-char threshold"
+    printf '%s\n' "$LEN_OUT" | sed 's/^/    | /'
+fi
+if printf '%s\n' "$LEN_OUT" | grep -q '50-200'; then
+    fail "lint still mentions the old 50-200 range"
+else
+    pass "lint no longer mentions the old 50-200 range"
+fi
+if printf '%s\n' "$LEN_OUT" | grep -q 'trimming to 500 chars or fewer'; then
+    pass "long description message states the 500-char threshold"
+else
+    fail "long description message does not state the 500-char threshold"
+    printf '%s\n' "$LEN_OUT" | sed 's/^/    | /'
+fi
+if printf '%s\n' "$LEN_OUT" | grep -q '< 300'; then
+    fail "lint still mentions trimming to < 300"
+else
+    pass "lint no longer mentions trimming to < 300"
+fi
+if printf '%s\n' "$LEN_OUT" | grep -q 'mediumskill'; then
+    fail "medium-length skill produced an unexpected lint line"
+    printf '%s\n' "$LEN_OUT" | sed 's/^/    | /'
+else
+    pass "medium-length skill produces no length lint line"
+fi
+
 # --- Summary ----------------------------------------------------------------
 echo
 echo "seam 1: $PASS passed, $FAIL failed"
